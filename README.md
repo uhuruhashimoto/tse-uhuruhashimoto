@@ -1,7 +1,7 @@
 # CS50 Summer 2021, Tiny Search Engine
-## Your name
+## Uhuru Hashimoto 
 
-GitHub username:
+GitHub username: uhuruhashimoto
 
 To build, run `make`.
 
