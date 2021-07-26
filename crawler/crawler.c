@@ -7,34 +7,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> //for parsing command line args
-#define MAX_WEBPAGES_TO_VISIT
-//TODO: include bag and ht and set
-//TODO: and webpagefetcher, pagedir, etc. 
-
-//TODO: what should I do about numslots to initialize ht? (currently #defined as MAX)
-// if need to dynamically allocate, must calloc, copy, and free every cycle to add a new webpage
-// ew
-
-/*************************** TYPEDEF ************************************/
-typedef struct crawler {
-	bag_t *bag; //urls to visit
-	hashtable_t *table; //urls visited
-} crawler_t;
+//#include "../libcs50/*"
+#define NUM_SLOTS 200
 
 /*************************** FUNCTION DECLARATIONS ************************************/
 
-static void itemcount(void *arg, const char *key, void *item)
+static void itemcount(void *arg, const char *key, void *item);
 void pagefetcher();
 void pagescanner();
 
 /*************************** DRIVER ************************************/
 int main(const int argc, char **argv) {
+
 	/*------------------------------- CHECK ARGS ---------------------------*/
 	//check command-line args
 	//note: strings for arguments declared below
 	int max_depth; //depth to crawl
-	int *nitem; //items in ht
-	int doc_id = 0; // doc id for saved info
 
 	if (argc < 4) {
 		fprintf(stderr, "Error: fewer than mininmum number of arguments.\n "
@@ -56,21 +44,24 @@ int main(const int argc, char **argv) {
 	//assign maxDepth
 	max_depth = strtoi(argv[3], NULL, 10); //if non-numeric input, default to 0
 
+	/*------------------------------- DEPLOY CRAWLER ---------------------------*/
+	int status = crawler(seedURL, dirname, max_depth);
 
+	return status;
+}
+
+/*************************** HELPERS ************************************/
+//crawler
+int crawler(char *seedURL, char *dirname, int max_depth) {
 	/*------------------------------- INITIALIZE MODS ---------------------------*/
 	//crawler and its data structures
 	//all allocation here
-	crawler_t crawler = malloc(sizeof(crawler_t));
+	int *nitem; //items in ht
+	int doc_id = 0; // doc id for saved info
+	bag_t *bag = bag_new();
+	hashtable_t *table = table_new(NUM_SLOTS);
 
-	if (crawler == NULL) {
-		fprinf(stderr, "Failed to initialize modules. Memory allocation error.\n");
-		return 2;
-	}
-
-	crawler->bag = bag_new();
-	crawler->table = hashtable_new(MAX_WEBPAGES_TO_VISIT); 
-
-	if (crawler->bag == NULL || crawler -> table == NULL) {
+	if (bag == NULL || table == NULL) {
 		fprinf(stderr, "Failed to initialize modules. Memory allocation error.\n");
 		return 2;
 	}
@@ -79,21 +70,21 @@ int main(const int argc, char **argv) {
 
 
 	/*------------------------------- CRAWL ---------------------------*/
-	//
+
 	//make the first webpage object (seed)
-	webpage_t *first = webpage_new(seedURL, max_depth, html);
+	webpage_t *first = webpage_new(seedURL, max_depth, NULL); //no html yet
 	//put it in bag
-	if (bag_insert(crawler->bag, first) == NULL) {
+	if (bag_insert(bag, first) == NULL) {
 		fprintf(stderr, "Initialization/insertion error: bag not empty\n");
 		return 2;
 	}
 
 	//crawling loop
 	//get size of bag
-	hashtable_iterate(ht, nitem, itemcount);
+	hashtable_iterate(table, nitem, itemcount);
 	while (*nitem > 0) {
 		//get webpage
-		webpage_t *webpage = bag_extract();
+		webpage_t *webpage = bag_extract(bag);
 		if (webpage == NULL) {
 			fprintf(stderr, "Bag extraction error while crawling\n");
 			return 3;
@@ -104,27 +95,50 @@ int main(const int argc, char **argv) {
 
 		//if webpage is < depth, get urls and store them
 		if (webpage->depth < max_depth) {
-			//normalize urls
-			//check if seen: insert into ht (seen)
-			//if not seen yet, make webpage object (maxdepth++)
-			//insert into bag 
+			//use pagescanner to get links from page
+			if (!pagefetcher(webpage)) {
+				fprintf(stderr, "Failed to find html data\n");
+				return 3;
+			}
+			else {
+
+			}
+			char *html = webpage_getHTML(page);
+
+			//for each page
+				//normalize urls
+				//check if seen: insert into ht (seen)
+				//if not seen yet, make webpage object (maxdepth++)
+				//insert into bag 
 		}
 
-		hashtable_iterate(ht, nitem, itemcount); //recheck if ht is empty
+		hashtable_iterate(table, nitem, itemcount); //recheck if ht is empty
 	}
 
 
 	/*------------------------------- FREE MODS ---------------------------*/
 	//all deallocation here
 	free(nitem);
-	bag_delete(crawler->bag, webpage_delete());
-	hashtable_delete(crawler->hashtable, webpage_delete());
-	free(crawler);
+	bag_delete(bag, webpage_delete());
+	hashtable_delete(hashtable, webpage_delete());
 
 	return 0;
 }
 
-/*************************** HELPERS ************************************/
+//assumes null webpage html
+//wrapper for clarity in modular decomposition
+bool pagefetcher(webpage_t *webpage) {
+	return webpage_fetch(webpage);
+}
+
+void pagescanner() {
+	 webpage_fetch()
+}
+
+void pagesaver() {
+
+}
+
 
 //gets size of bag
 static void itemcount(void *arg, const char *key, void *item)
@@ -134,12 +148,3 @@ static void itemcount(void *arg, const char *key, void *item)
   if (nitems != NULL && key != NULL && item != NULL)
     (*nitems)++;
 }
-
-void pagefetcher() {
-	//use (webpage-fetch())
-}
-
-void pagescanner() {
-
-}
-
