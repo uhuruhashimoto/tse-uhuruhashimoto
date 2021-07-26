@@ -19,6 +19,14 @@
 #include "../libcs50/webpage.h"
 #include "../libcs50/file.h"
 
+/*************************** FUNCTION DECLARATIONS **********************/
+int crawler(char *seedURL, char *dirname, char *chardep, int intdep);
+char *copyURL(char *url);
+void pagesaver(webpage_t *webpage, char *chardepth, int doc_id);
+bool pagefetcher(webpage_t *webpage);
+bool isBagEmpty(bag_t bag, int *counter);
+static void itemcount(void *arg, const char *key, void *item);
+
 /*************************** DRIVER ************************************/
 //Note: allocated url is freed automatically upon crawler call to webpage_delete()
 int main(const int argc, char **argv) {
@@ -76,9 +84,9 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	int doc_id = 0; // doc id for saved info
 
 	//bag (future pages)
-	bag_t bag = bag_new();
+	bag_t *bag = bag_new();
 	//hashtable (visited pages)
-	hashtable_t table = hashtable_new();
+	hashtable_t *table = hashtable_new();
 	if (bag == NULL || table == NULL) {
 		fprintf(stderr, "Failed to initalize crawler data structures.\n");
 		return (ret+=2);
@@ -105,7 +113,7 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 			//fetch page from url
 			if (pagefetcher(page)) {
 				//save page
-				pagesaver(page);
+				pagesaver(page, chardep, ++doc_id);
 				//if we're still in depth constraint
 				if (webpage_getDepth(page) < intdep) {
 					//initalize tools for getting urls (allocation not necessary)
@@ -141,7 +149,7 @@ char *copyURL(char *url) {
 }
 
 //assumes non-null webpage with fetched html content
-void pagesaver(webpage_t *webpage) {
+void pagesaver(webpage_t *webpage, char *chardepth, int doc_id) {
 	//saves and writes to file
 	fprintf(stdout, "saving page! TODO\n");
 }
