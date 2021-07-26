@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 //all of library
 #include "../libcs50/bag.h"
 #include "../libcs50/set.h"
@@ -18,14 +19,15 @@
 #include "../libcs50/memory.h"
 #include "../libcs50/webpage.h"
 #include "../libcs50/file.h"
+#define NUM_SLOTS 200
 
 /*************************** FUNCTION DECLARATIONS **********************/
 int crawler(char *seedURL, char *dirname, char *chardep, int intdep);
 char *copyURL(char *url);
 void pagesaver(webpage_t *webpage, char *chardepth, int doc_id);
 bool pagefetcher(webpage_t *webpage);
-bool isBagEmpty(bag_t bag, int *counter);
-static void itemcount(void *arg, const char *key, void *item);
+bool isBagEmpty(bag_t *bag, int *counter);
+static void itemcount(void *arg, void *item);
 
 /*************************** DRIVER ************************************/
 //Note: allocated url is freed automatically upon crawler call to webpage_delete()
@@ -47,7 +49,7 @@ int main(const int argc, char **argv) {
 
 	//CHECK URL
 	//internal check
-	if (!isInternalURL(argv[1])) {
+	if (!IsInternalURL(argv[1])) {
 		fprintf(stderr, "Error: Seed URL %s is not internal\n", argv[1]);
 		return ++status;
 	}
@@ -66,10 +68,10 @@ int main(const int argc, char **argv) {
 	//CHECK DEPTH
 	//if non-numeric input, default to 0
 	char *chardep = argv[3];
-	intdep = strtoi(argv[3], NULL, 10); 
+	int intdep = strtol(argv[3], NULL, 10);  //assumes no overflow
 
 	/*------------------------------- DEPLOY CRAWLER ---------------------------*/
-	status += crawler(url_copy, dirname, chardep, intdep);
+	status += crawler(url, dirname, chardep, intdep);
 
 	return status;
 }
@@ -86,7 +88,7 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	//bag (future pages)
 	bag_t *bag = bag_new();
 	//hashtable (visited pages)
-	hashtable_t *table = hashtable_new();
+	hashtable_t *table = hashtable_new(NUM_SLOTS);
 	if (bag == NULL || table == NULL) {
 		fprintf(stderr, "Failed to initalize crawler data structures.\n");
 		return (ret+=2);
@@ -99,7 +101,8 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	}
 
 	//insert into bag and ht
-	if (bag_insert(bag, firstpage) == NULL || hashtable_insert(bag, firstpage) == NULL) {
+	bag_insert(bag, firstpage);
+	if (!hashtable_insert(table, webpage_getURL(firstpage), "")) {
 		fprintf(stderr, "Seed webpage insertion failed. Cannot proceed\n");
 		return (ret+=2);
 	}
@@ -121,10 +124,15 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 					char *next_url;
 					//get urls
 					while ((next_url = webpage_getNextURL(page, &pos)) != NULL) {
-						//make into a webpage
-						webpage *newpage = webpage_new(next_url, ++webpage_getDepth(page), NULL);
-						//put in bag
-						bag_insert(bag, newpage);
+						//try to insert it into the hashtable
+						if (hashtable_insert(table, webpage_getURL(page), "")) {
+							//if it hasn't been seen before (insertion successful)
+							//make into a webpage
+							int ndepth = webpage_getDepth(page);
+							webpage_t *newpage = webpage_new(next_url, ++ndepth, NULL);
+							//put in bag
+							bag_insert(bag, newpage);
+						}
 					}
 				}
 			}
@@ -134,8 +142,8 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 
 	//FREE STRUCTURES
 	free(nitem);
-	bag_delete(bag, webpage_delete());
-	hashtable_delete(hashtable, webpage_delete());
+	bag_delete(bag, webpage_delete);
+	hashtable_delete(table, webpage_delete);
 
 	return ret;
 }
@@ -161,7 +169,7 @@ bool pagefetcher(webpage_t *webpage) {
 }
 
 //wrapper to check if bag is empty
-bool isBagEmpty(bag_t bag, int *counter) {
+bool isBagEmpty(bag_t *bag, int *counter) {
 	bag_iterate(bag, counter, itemcount);
 	if (*counter > 0) {
 		return false;
@@ -172,10 +180,10 @@ bool isBagEmpty(bag_t bag, int *counter) {
 //helper
 //gets size of bag
 //called as pointer to check if bag empty
-static void itemcount(void *arg, const char *key, void *item)
+static void itemcount(void *arg, void *item)
 {
   int *nitems = arg;
 
-  if (nitems != NULL && key != NULL && item != NULL)
+  if (nitems != NULL && item != NULL)
     (*nitems)++;
 }
