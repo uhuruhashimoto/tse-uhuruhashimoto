@@ -58,6 +58,7 @@ int main(const int argc, char **argv) {
 	char *url = copyURL(argv[1]);
 	if (!NormalizeURL(url)) {
 		fprintf(stderr, "Error: Seed URL %s cannot be normalized\n", url);
+		free(url);
 		return ++status;
 	}
 
@@ -83,6 +84,7 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	//INITIALIZE DATA STRUCTURES
 	int ret = 0;
 	int *nitem = malloc(sizeof(int)); //counts items in ht
+	*nitem = 0; //initialize to 0
 	int doc_id = 0; // doc id for saved info
 
 	//bag (future pages)
@@ -94,7 +96,7 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 		return (ret+=2);
 	}
 
-	webpage_t *firstpage = webpage_new(seedURL, intdep, NULL);
+	webpage_t *firstpage = webpage_new(seedURL, 0, NULL);
 	if (firstpage == NULL) {
 		fprintf(stderr, "Seed webpage initalization failed. Cannot proceed\n");
 		return (ret+=2);
@@ -138,12 +140,13 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 			}
 			webpage_delete(page); //page no longer in bag; delete
 		}
+		*nitem = 0; //reset counter for next iteration
 	}
 
 	//FREE STRUCTURES
 	free(nitem);
 	bag_delete(bag, webpage_delete);
-	hashtable_delete(table, webpage_delete);
+	hashtable_delete(table, NULL); //no itemdelete needed, since values are not allocated
 
 	return ret;
 }
@@ -151,8 +154,8 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 //copy to allocate first url
 //responsiblity of caller to free returned pointer
 char *copyURL(char *url) {
-	char *url_copy = assertp(calloc(sizeof(char), strlen(url)+1), "Memory insufficient");
-	strcpy(url_copy, url);
+	char *url_copy = (char *)(calloc(sizeof(char),strlen(url)+1));
+	strcpy(url_copy, url); //(destination, source)
 	return url_copy;
 }
 
