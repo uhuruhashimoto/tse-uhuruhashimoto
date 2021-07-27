@@ -5,6 +5,7 @@ FLAGS = -Wall -pedantic -std=c11 -ggdb
 CC = gcc
 MAKE = make
 CLEAN = make clean
+LIBDIR = ../libcs50
 LIB = ../libcs50/libcs50.a
 EXECUTABLE = crawler
 CFILE = crawler.c
@@ -14,9 +15,9 @@ $(EXECUTABLE): $(OBJS) $(LIB)
 
 # library dependency
 $(LIB): 
-	$(MAKE) -C ../libcs50
+	$(MAKE) -C $(LIBDIR)
 
 clean: 
 	rm -f $(EXECUTABLE)
 	rm -f *.o 
-	$(CLEAN) -C ../libcs50
+	$(CLEAN) -C $(LIBDIR)
