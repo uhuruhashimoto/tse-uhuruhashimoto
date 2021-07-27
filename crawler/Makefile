@@ -11,14 +11,7 @@ $(EXECUTABLE): $(OBJS)
 	$(CC) $(FLAGS) -o $(EXECUTABLE) $(CFILE) -L $(LIB)
 
 # dependencies (headers)
-bag.o: bag.h
-counters.o: counters.h
-file.o: file.h
-hashtable.o: hashtable.h
-jhash.o: jhash.h
-memory.o: memory.h
-set.o: set.h
-webpage.o: webpage.h
+
 
 clean: 
 	rm -f $(EXECUTABLE)
