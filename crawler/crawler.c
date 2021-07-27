@@ -24,7 +24,7 @@
 /*************************** FUNCTION DECLARATIONS **********************/
 int crawler(char *seedURL, char *dirname, char *chardep, int intdep);
 char *copyURL(char *url);
-void pagesaver(webpage_t *webpage, char *chardepth, int doc_id);
+void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id);
 bool pagefetcher(webpage_t *webpage);
 bool isBagEmpty(bag_t *bag, int *counter);
 static void itemcount(void *arg, void *item);
@@ -121,7 +121,7 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 			//fetch page from url
 			if (pagefetcher(page)) {
 				//save page
-				pagesaver(page, chardep, ++doc_id);
+				pagesaver(page, chardep, dirname, ++doc_id);
 				//if we're still in depth constraint
 				if (webpage_getDepth(page) < intdep) {
 					//initalize tools for getting urls (allocation not necessary)
@@ -164,9 +164,41 @@ char *copyURL(char *url) {
 }
 
 //assumes non-null webpage with fetched html content
-void pagesaver(webpage_t *webpage, char *chardepth, int doc_id) {
+void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
+	if (webpage == NULL) return;
 	//saves and writes to file
-	fprintf(stdout, "saving page! TODO\n");
+	//check file validity
+	// check file validity
+	char *fname = makeFileName(dirname, doc_id);
+	FILE *fp = fopen(fname, "r");
+	if (fp != NULL) {
+			fprintf(stderr, "File \"%s\" will be overwritten; data save aborted\n", fname);
+			fclose(fp);
+			free(fname);
+			return;
+	}
+	//open file to write
+	fp = fopen(fname, "w");
+	//put url on first line
+	fputs(webpage_getURL(webpage), fp);
+	fputs("\n", fp);
+	//put depth on second line
+	fprintf(fp, "%s", chardepth);
+	fputs("\n", fp);
+	//put page content on third line
+	fputs(webpage_getHTML(webpage), fp);
+
+	fclose(fp);
+	free(fname);
+}
+
+char *makeFileName(char *dirname, int doc_id) {
+	//allocate space for the dirname, space for the filename, a / and a null terminator
+	//figure this out
+	char *filename = malloc(strlen(dirname) +3);
+	*filename = dirname + '/'+ '1' + '\0';
+	printf("TODO: make file name\n");
+	return filename;
 }
 
 //assumes null webpage html
