@@ -58,7 +58,7 @@ int main(const int argc, char **argv) {
 	char *url = copyURL(argv[1]);
 	if (!NormalizeURL(url)) {
 		fprintf(stderr, "Error: Seed URL %s cannot be normalized\n", url);
-		free(url);
+		if (url != NULL) free(url);
 		return ++status;
 	}
 
@@ -99,11 +99,14 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	webpage_t *firstpage = webpage_new(seedURL, 0, NULL);
 	if (firstpage == NULL) {
 		fprintf(stderr, "Seed webpage initalization failed. Cannot proceed\n");
+		if (seedURL != NULL) free(seedURL);
 		return (ret+=2);
 	}
 
 	//insert into bag and ht
-	bag_insert(bag, firstpage);
+	//(bag insertion takes pointer to webpage
+	//ht insertion copies allocated url string; left to us to free)
+	bag_insert(bag, firstpage); 
 	if (!hashtable_insert(table, webpage_getURL(firstpage), "")) {
 		fprintf(stderr, "Seed webpage insertion failed. Cannot proceed\n");
 		return (ret+=2);
@@ -154,8 +157,9 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 //copy to allocate first url
 //responsiblity of caller to free returned pointer
 char *copyURL(char *url) {
-	char *url_copy = (char *)(calloc(sizeof(char),strlen(url)+1));
+	char *url_copy = count_malloc(sizeof(char)*strlen(url)); //first copy; second is in set line 54
 	strcpy(url_copy, url); //(destination, source)
+	url_copy[strlen(url)] = '\0'; //set nul terminator just in case
 	return url_copy;
 }
 
