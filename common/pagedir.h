@@ -5,11 +5,26 @@
 * Uhuru Hashimoto CS50 21X
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+//libcs50 library modules
+#include "../libcs50/webpage.h"
+
 /*
 * checks existence and write permissions of directory by opening a file 
 * "crawler" to write to
 */
 bool checkDir(char *dirname);
+
+/*
+* saves webpage data to a specified file of name "doc_id" in directory "dirname"
+* chardepth is the depth as a string, e.g. "12" or "0"; 
+* responsiblity of the user to create directly as an input argument or by using intToString
+* and free if necessary afterwards.
+*/
+void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id);
 
 /*
 * allocates and creates a string "dirname/filename"

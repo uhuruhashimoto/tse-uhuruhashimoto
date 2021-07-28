@@ -169,45 +169,6 @@ char *copyURL(char *url) {
 	return url_copy;
 }
 
-// assumes non-null webpage with fetched html content
-// uses pagedir modules to create files and writes webpage data to them
-void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
-	// INIT STRUCTURES
-	char *strnum = intToString(doc_id); //allocated
-	char *filename = filenameCreator(dirname, strnum); //allocated
-
-	// OVERWRITE CHECKS
-	FILE *fp = fopen(filename, "r");
-	if (fp != NULL) { // if file exists
-		fprintf(stderr, "Error: file %s will be overwritten by save.\n", filename);
-		fclose(fp);
-		free(strnum);
-		free(filename);
-		return;
-	}
-	fclose(fp);
-
-	// WRITE DATA
-	fp = fopen(filename, "w");
-	if (fp == NULL) {
-		fprintf(stderr, "Error: file %s cannot be written to.\n", filename);
-		free(strnum);
-		free(filename);
-		return;
-	}
-	// first line: url
-	fprintf(fp, "%s\n", webpage_getURL(webpage));
-	// second line: depth
-	fprintf(fp, "%s\n", chardepth);
-	// third line+ : html data
-	fprintf(fp, "%s", webpage_getHTML(webpage));
-
-	// FREE STRUCTURES
-	fclose(fp);
-	free(strnum);
-	free(filename);
-}
-
 // assumes null webpage html
 // wrapper for clarity in modular decomposition
 bool pagefetcher(webpage_t *webpage) {
