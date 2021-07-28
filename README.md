@@ -7,4 +7,6 @@ To build, run `make`.
 
 To clean up, run `make clean`.
 
-*Please replace this text with any comments you have about the overall assignment.  Please supply a README for each subdirectory..*
+Note: build does not currently support `indexer` or `querier` modules.
+
+For implementation specifics, please refer to the README files in associated subdirectories.
