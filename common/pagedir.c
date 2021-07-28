@@ -12,7 +12,7 @@
 #include "../libcs50/webpage.h"
 
 bool checkDir(char *dirname);
-void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id);
+void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id);
 char *filenameCreator(char *dirname, char *filename);
 char *intToString(int num);
 
@@ -38,7 +38,8 @@ bool checkDir(char *dirname) {
 
 // assumes non-null webpage with fetched html content
 // uses pagedir modules to create files and writes webpage data to them
-void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
+void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id) {
+	printf("TODO: pagesaver called with url %s and depth %d\n", webpage_getURL(webpage), depth);
 	// INIT STRUCTURES
 	char *strnum = intToString(doc_id); //allocated
 	char *filename = filenameCreator(dirname, strnum); //allocated
@@ -64,7 +65,7 @@ void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
 	// first line: url
 	fprintf(fp, "%s\n", webpage_getURL(webpage));
 	// second line: depth
-	fprintf(fp, "%s\n", chardepth);
+	fprintf(fp, "%d\n", depth);
 	// third line+ : html data
 	fprintf(fp, "%s", webpage_getHTML(webpage));
 

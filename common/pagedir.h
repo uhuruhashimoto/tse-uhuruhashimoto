@@ -24,7 +24,7 @@ bool checkDir(char *dirname);
 * responsiblity of the user to create directly as an input argument or by using intToString
 * and free if necessary afterwards.
 */
-void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id);
+void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id);
 
 /*
 * allocates and creates a string "dirname/filename"

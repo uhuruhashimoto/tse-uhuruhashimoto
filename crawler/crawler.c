@@ -23,9 +23,8 @@
 #define NUM_SLOTS 200
 
 /*************************** FUNCTION DECLARATIONS **********************/
-int crawler(char *seedURL, char *dirname, char *chardep, int intdep);
+int crawler(char *seedURL, char *dirname, int depth);
 char *copyURL(char *url);
-void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id);
 bool pagefetcher(webpage_t *webpage);
 bool isBagEmpty(bag_t *bag, int *counter);
 static void itemcount(void *arg, void *item);
@@ -74,11 +73,10 @@ int main(const int argc, char **argv) {
 
 	// CHECK DEPTH
 	// if non-numeric input, default to 0
-	char *chardep = argv[3];
 	int intdep = strtol(argv[3], NULL, 10);  // assumes no overflow
 
 	/*------------------------------- DEPLOY CRAWLER ---------------------------*/
-	status += crawler(url, dirname, chardep, intdep);
+	status += crawler(url, dirname, intdep);
 
 	return status;
 }
@@ -86,7 +84,7 @@ int main(const int argc, char **argv) {
 
 /*************************** HELPERS ************************************/
 // crawler
-int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
+int crawler(char *seedURL, char *dirname, int depth) {
 	// INITIALIZE DATA STRUCTURES
 	int ret = 0;
 	int *nitem = malloc(sizeof(int)); //counts items in ht
@@ -127,9 +125,9 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 			// fetch page from url
 			if (pagefetcher(page)) {
 				//save page
-				pagesaver(page, chardep, dirname, ++doc_id);
+				pagesaver(page, webpage_getDepth(page), dirname, ++doc_id);
 				// if we're still in depth constraint
-				if (webpage_getDepth(page) < intdep) {
+				if (webpage_getDepth(page) < depth) {
 					// initalize tools for getting urls (allocation not necessary)
 					int pos = 0;
 					char *next_url;
