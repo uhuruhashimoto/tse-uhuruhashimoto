@@ -6,7 +6,7 @@ CC = gcc
 MAKE = make
 CLEAN = make clean
 LIBDIR = ../common ../libcs50
-LIBS = ../common/common.a ../libcs50/libcs50.a
+LIB = ../common/common.a ../libcs50/libcs50.a
 EXECUTABLE = crawler
 CFILE = crawler.c
 
