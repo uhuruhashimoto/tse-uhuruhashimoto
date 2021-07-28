@@ -9,11 +9,15 @@
 #include <stdbool.h>
 #include <string.h>
 
+bool checkDir(char *dirname);
+char *filenameCreator(char *dirname, char *filename);
+char *intToString(int num);
+
 // opens a file "crawler" in the specified directory 
 // to check its existence and write permissions
 bool checkDir(char *dirname) {
     //create a string "dirname/crawler"
-    char *cr = "crawler";
+    char *cr = ".crawler";
     char *filename = filenameCreator(dirname, cr);
 
     //open file and return result
@@ -23,6 +27,7 @@ bool checkDir(char *dirname) {
         return false;
     }
     else {
+        fclose(fp);
         free(filename);
         return true;
     }
