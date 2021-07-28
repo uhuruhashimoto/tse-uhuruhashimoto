@@ -52,7 +52,6 @@ void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
 		free(filename);
 		return;
 	}
-	fclose(fp);
 
 	// WRITE DATA
 	fp = fopen(filename, "w");
