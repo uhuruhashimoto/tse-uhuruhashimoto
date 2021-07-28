@@ -30,12 +30,12 @@ bool isBagEmpty(bag_t *bag, int *counter);
 static void itemcount(void *arg, void *item);
 
 /*************************** DRIVER ************************************/
-//Note: allocated url is freed automatically upon crawler call to webpage_delete()
+// Note: allocated url is freed automatically upon crawler call to webpage_delete()
 int main(const int argc, char **argv) {
 	int status = 0;
 
 	/*------------------------------- CHECK ARGS ---------------------------*/
-	//CHECK NUMBER
+	// CHECK NUMBER
 	if (argc < 4) {
 		fprintf(stderr, "Error: fewer than mininmum number of arguments.\n "
 			"Usage: ./crawler seedURL pageDirectory maxDepth\n");
@@ -47,14 +47,14 @@ int main(const int argc, char **argv) {
 		return ++status;
 	}
 
-	//CHECK URL
-	//internal check
+	// CHECK URL
+	// internal check
 	if (!IsInternalURL(argv[1])) {
 		fprintf(stderr, "Error: Seed URL %s is not internal\n", argv[1]);
 		return ++status;
 	}
 	
-	//copy and normalize
+	// copy and normalize
 	char *url = copyURL(argv[1]);
 	if (!NormalizeURL(url)) {
 		fprintf(stderr, "Error: Seed URL %s cannot be normalized\n", url);
@@ -62,14 +62,14 @@ int main(const int argc, char **argv) {
 		return ++status;
 	}
 
-	//CHECK DIR
+	// CHECK DIR
 	char *dirname = argv[2];
-	printf("Checking dir! TODO\n");
+	printf("TODO: Checking dir!\n"); 
 
-	//CHECK DEPTH
-	//if non-numeric input, default to 0
+	// CHECK DEPTH
+	// if non-numeric input, default to 0
 	char *chardep = argv[3];
-	int intdep = strtol(argv[3], NULL, 10);  //assumes no overflow
+	int intdep = strtol(argv[3], NULL, 10);  // assumes no overflow
 
 	/*------------------------------- DEPLOY CRAWLER ---------------------------*/
 	status += crawler(url, dirname, chardep, intdep);
@@ -79,17 +79,17 @@ int main(const int argc, char **argv) {
 
 
 /*************************** HELPERS ************************************/
-//crawler
+// crawler
 int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
-	//INITIALIZE DATA STRUCTURES
+	// INITIALIZE DATA STRUCTURES
 	int ret = 0;
 	int *nitem = malloc(sizeof(int)); //counts items in ht
-	*nitem = 0; //initialize to 0
+	*nitem = 0; // initialize to 0
 	int doc_id = 0; // doc id for saved info
 
-	//bag (future pages)
+	// bag (future pages)
 	bag_t *bag = bag_new();
-	//hashtable (visited pages)
+	// hashtable (visited pages)
 	hashtable_t *table = hashtable_new(NUM_SLOTS);
 	if (bag == NULL || table == NULL) {
 		fprintf(stderr, "Failed to initalize crawler data structures.\n");
@@ -103,9 +103,9 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 		return (ret+=2);
 	}
 
-	//insert into bag and ht
-	//(bag insertion takes pointer to webpage
-	//ht insertion copies allocated url string; left to us to free)
+	// insert into bag and ht
+	// (bag insertion takes pointer to webpage
+	// ht insertion copies allocated url string; left to us to free)
 	bag_insert(bag, firstpage); 
 	if (!hashtable_insert(table, webpage_getURL(firstpage), "")) {
 		fprintf(stderr, "Seed webpage insertion failed. Cannot proceed\n");
@@ -113,101 +113,69 @@ int crawler(char *seedURL, char *dirname, char *chardep, int intdep) {
 	}
 	
 
-	//CRAWL
+	// CRAWL
 	while (!isBagEmpty(bag, nitem)) {
-		//get webpage from bag
+		// get webpage from bag
 		webpage_t *page = bag_extract(bag);
 		if (page != NULL) {
-			//fetch page from url
+			// fetch page from url
 			if (pagefetcher(page)) {
 				//save page
 				pagesaver(page, chardep, dirname, ++doc_id);
-				//if we're still in depth constraint
+				// if we're still in depth constraint
 				if (webpage_getDepth(page) < intdep) {
-					//initalize tools for getting urls (allocation not necessary)
+					// initalize tools for getting urls (allocation not necessary)
 					int pos = 0;
 					char *next_url;
-					//get urls
+					// get urls
 					while ((next_url = webpage_getNextURL(page, &pos)) != NULL) {
-						//try to insert it into the hashtable
+						// try to insert it into the hashtable
 						if (hashtable_insert(table, webpage_getURL(page), "")) {
-							//if it hasn't been seen before (insertion successful)
-							//make into a webpage
+							// if it hasn't been seen before (insertion successful)
+							// make into a webpage
 							int ndepth = webpage_getDepth(page);
 							webpage_t *newpage = webpage_new(next_url, ++ndepth, NULL);
-							//put in bag
+							// put in bag
 							bag_insert(bag, newpage);
 						}
 					}
 				}
 			}
-			webpage_delete(page); //page no longer in bag; delete
+			webpage_delete(page); // page no longer in bag; delete
 		}
-		*nitem = 0; //reset counter for next iteration
+		*nitem = 0; // reset counter for next iteration
 	}
 
-	//FREE STRUCTURES
+	// FREE STRUCTURES
 	free(nitem);
 	bag_delete(bag, webpage_delete);
-	hashtable_delete(table, NULL); //no itemdelete needed, since values are not allocated
+	hashtable_delete(table, NULL); // no itemdelete needed, since values are not allocated
 
 	return ret;
 }
 
-//copy to allocate first url
-//responsiblity of caller to free returned pointer
+// copy to allocate first url
+// responsiblity of caller to free returned pointer
 char *copyURL(char *url) {
-	char *url_copy = count_malloc(sizeof(char)*strlen(url)); //first copy; second is in set line 54
-	strcpy(url_copy, url); //(destination, source)
-	url_copy[strlen(url)] = '\0'; //set nul terminator just in case
+	char *url_copy = count_malloc(sizeof(char)*strlen(url)); // first copy; second is in set line 54
+	strcpy(url_copy, url); // (destination, source)
+	url_copy[strlen(url)] = '\0'; // set nul terminator just in case
 	return url_copy;
 }
 
-//assumes non-null webpage with fetched html content
+// assumes non-null webpage with fetched html content
+// uses pagedir modules to create files and writes webpage data to them
 void pagesaver(webpage_t *webpage, char *chardepth, char *dirname, int doc_id) {
-	if (webpage == NULL) return;
-	//saves and writes to file
-	//check file validity
-	// check file validity
-	char *fname = makeFileName(dirname, doc_id);
-	FILE *fp = fopen(fname, "r");
-	if (fp != NULL) {
-			fprintf(stderr, "File \"%s\" will be overwritten; data save aborted\n", fname);
-			fclose(fp);
-			free(fname);
-			return;
-	}
-	//open file to write
-	fp = fopen(fname, "w");
-	//put url on first line
-	fputs(webpage_getURL(webpage), fp);
-	fputs("\n", fp);
-	//put depth on second line
-	fprintf(fp, "%s", chardepth);
-	fputs("\n", fp);
-	//put page content on third line
-	fputs(webpage_getHTML(webpage), fp);
-
-	fclose(fp);
-	free(fname);
+	printf("TODO: save page\n");
 }
 
-char *makeFileName(char *dirname, int doc_id) {
-	//allocate space for the dirname, space for the filename, a / and a null terminator
-	//figure this out
-	char *filename = malloc(strlen(dirname) +3);
-	*filename = dirname + '/'+ '1' + '\0';
-	printf("TODO: make file name\n");
-	return filename;
-}
-
-//assumes null webpage html
-//wrapper for clarity in modular decomposition
+// assumes null webpage html
+// wrapper for clarity in modular decomposition
 bool pagefetcher(webpage_t *webpage) {
 	return webpage_fetch(webpage);
 }
 
-//wrapper to check if bag is empty
+// wrapper to check if bag is empty
 bool isBagEmpty(bag_t *bag, int *counter) {
 	bag_iterate(bag, counter, itemcount);
 	if (*counter > 0) {
@@ -216,9 +184,9 @@ bool isBagEmpty(bag_t *bag, int *counter) {
 	return true;
 }
 
-//helper
-//gets size of bag
-//called as pointer to check if bag empty
+// helper
+// gets size of bag
+// called as pointer to check if bag empty
 static void itemcount(void *arg, void *item)
 {
   int *nitems = arg;
