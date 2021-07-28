@@ -84,7 +84,7 @@ char *filenameCreator(char *dirname, char *filename) {
     ret = malloc(sizeof(char)*(strlen(dirname)+strlen(filename)+2));
     if (ret == NULL) return NULL;
     strcpy(ret, dirname);
-    strcat(ret, '/');
+    strcat(ret, "/");
     strcat(ret, filename); //strcat adds null terminator by default
     return ret;
 }

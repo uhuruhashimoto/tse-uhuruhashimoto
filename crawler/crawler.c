@@ -67,7 +67,7 @@ int main(const int argc, char **argv) {
 	char *dirname = argv[2];
 	bool dirWritable = checkDir(dirname);
 	if (!dirWritable) {
-		fprintf(stderr, "Error: directory %s does not exist or lacks write permissions\n");
+		fprintf(stderr, "Error: directory %s does not exist or lacks write permissions\n", dirname);
 		free(url);
 		return ++status;
 	}
