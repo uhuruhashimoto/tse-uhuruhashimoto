@@ -134,7 +134,7 @@ int crawler(char *seedURL, char *dirname, int depth) {
 					// get urls
 					while ((next_url = webpage_getNextURL(page, &pos)) != NULL) {
 						// try to insert it into the hashtable
-						if (hashtable_insert(table, webpage_getURL(page), "")) {
+						if (hashtable_insert(table, next_url, "")) {
 							// if it hasn't been seen before (insertion successful)
 							// make into a webpage
 							int ndepth = webpage_getDepth(page);

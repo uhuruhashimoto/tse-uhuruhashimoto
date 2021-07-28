@@ -39,7 +39,6 @@ bool checkDir(char *dirname) {
 // assumes non-null webpage with fetched html content
 // uses pagedir modules to create files and writes webpage data to them
 void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id) {
-	printf("TODO: pagesaver called with url %s and depth %d\n", webpage_getURL(webpage), depth);
 	// INIT STRUCTURES
 	char *strnum = intToString(doc_id); //allocated
 	char *filename = filenameCreator(dirname, strnum); //allocated
