@@ -65,7 +65,12 @@ int main(const int argc, char **argv) {
 
 	// CHECK DIR
 	char *dirname = argv[2];
-	printf("TODO: Checking dir!\n"); 
+	bool dirWritable = checkDir(dirname);
+	if (!dirWritable) {
+		fprintf(stderr, "Error: directory %s does not exist or lacks write permissions\n");
+		free(url);
+		return ++status;
+	}
 
 	// CHECK DEPTH
 	// if non-numeric input, default to 0
