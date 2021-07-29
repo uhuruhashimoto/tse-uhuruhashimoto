@@ -74,6 +74,10 @@ int main(const int argc, char **argv) {
 	// CHECK DEPTH
 	// if non-numeric input, default to 0
 	int intdep = strtol(argv[3], NULL, 10);  // assumes no overflow
+	if (intdep < 0) {
+		fprintf(stderr, "Error: A negative depth %d was provided.\n", intdep);
+		return ++status;
+	}
 
 	/*------------------------------- DEPLOY CRAWLER ---------------------------*/
 	status += crawler(url, dirname, intdep);
