@@ -8,6 +8,11 @@ OBJS = pagedir.o
 $(LIB): $(OBJS)
 	ar cr $(LIB) $(OBJS)
 
+# no overwrites
+safe: 
+	gcc $(CFLAGS) -c pagedir.c -DNOOVERWRITE
+	ar cr $(LIB) $(OBJS)
+
 # dependencies 
 pagedir.o: pagedir.h
 

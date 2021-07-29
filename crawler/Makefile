@@ -21,6 +21,12 @@ $(EXECUTABLE): $(OBJS) $(LIB)
 ../common/common.a:
 	$(MAKE) -C $(COMDIR)
 
+#no overwrites
+safe: ../libcs50/libcs50.a
+	make safe -C $(COMDIR)
+	$(CC) $(FLAGS) -o $(EXECUTABLE) $(CFILE) $(LIB)
+
+
 clean: 
 	rm -f $(EXECUTABLE)
 	rm -f *.o 

@@ -42,9 +42,11 @@ void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id) {
 	// INIT STRUCTURES
 	char *strnum = intToString(doc_id); //allocated
 	char *filename = filenameCreator(dirname, strnum); //allocated
+    FILE *fp = NULL;
 
+#ifndef NOOVERWRITE
 	// OVERWRITE CHECKS
-	FILE *fp = fopen(filename, "r");
+	fp = fopen(filename, "r");
 	if (fp != NULL) { // if file exists
 		fprintf(stderr, "Error: file %s will be overwritten by save.\n", filename);
 		fclose(fp);
@@ -52,6 +54,7 @@ void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id) {
 		free(filename);
 		return;
 	}
+#endif
 
 	// WRITE DATA
 	fp = fopen(filename, "w");
