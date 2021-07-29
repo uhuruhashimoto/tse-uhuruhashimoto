@@ -21,6 +21,7 @@
 #include "../libcs50/file.h"
 #include "../common/pagedir.h"
 #define NUM_SLOTS 200
+#define MAX_DEPTH 50
 
 /*************************** FUNCTION DECLARATIONS **********************/
 int crawler(char *seedURL, char *dirname, int depth);
@@ -76,6 +77,10 @@ int main(const int argc, char **argv) {
 	int intdep = strtol(argv[3], NULL, 10);  // assumes no overflow
 	if (intdep < 0) {
 		fprintf(stderr, "Error: A negative depth %d was provided.\n", intdep);
+		return ++status;
+	}
+	else if (intdep > MAX_DEPTH) {
+		fprintf(stderr, "Error: Depth %d exceeded maximum depth.\n", intdep);
 		return ++status;
 	}
 
