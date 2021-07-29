@@ -26,6 +26,11 @@ safe: ../libcs50/libcs50.a
 	make safe -C $(COMDIR)
 	$(CC) $(FLAGS) -o $(EXECUTABLE) $(CFILE) $(LIB)
 
+test: 
+	make
+	./testing.sh &> testing.out
+
+.PHONY: safe test clean 
 
 clean: 
 	rm -f $(EXECUTABLE)
