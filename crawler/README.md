@@ -12,12 +12,12 @@ To run, use `./crawler URL dirname depth` where:
 -   'URL' is a specified *internal* url beginning with http://cs50tse.cs.dartmouth.edu/
 -   'dirname' is the name of/path to a directory with write permissions
 -   'depth' is a non-negative integer specifying the depth at which the crawler
-    should crawl.
+    should crawl (must be less than 50).
 
 ## Testing
-To test the crawler (output redirected to `testing.out`), run `make test` or directly test to stdout with `testing.sh`. 
+To test the crawler (output redirected to `testing.out`), run `make test` or directly test to stdout with `testing.sh`. This creates the directory `test` (if not existing), which contains three directories for the Letters, Wikipedia, and ToScrape seeds respectively. In these seeds, test results can be found under directories of the format [seed tested]-[depth tested]. 
 
-*Note: this creates nested storage directories in the current directory of the user. Inital testing currently writes twice to THE SAME DIRECTORY for its first test (letters at depth 0), and then writes to successive directories.*
+*Note: testing.sh creates nested storage directories in the current directory of the user. Inital testing currently writes twice to THE SAME DIRECTORY for its first test (letters at depth 0), and then writes to successive directories.*
 
 *Note: uncomment the commented test in testing.sh to test the wiki safe seed at depth 2. This test creates 1675 files under test/wiki/wiki-2 and takes ~30 minutes to run.*
 
