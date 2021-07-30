@@ -26,6 +26,7 @@ mkdir -p $dirC-{0..1}
 ./crawler 
 ./crawler $seedA 
 ./crawler $seedA $dirA-0
+
 # too many
 ./crawler $seedA $dirA-0 $depthA $depthA
 
