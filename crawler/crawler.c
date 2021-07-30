@@ -80,7 +80,7 @@ int main(const int argc, char **argv) {
 		return ++status;
 	}
 	else if (intdep > MAX_DEPTH) {
-		fprintf(stderr, "Error: Depth %d exceeded maximum depth.\n", intdep);
+		fprintf(stderr, "Error: Depth %d exceeded maximum depth %d.\n", intdep, MAX_DEPTH);
 		return ++status;
 	}
 
