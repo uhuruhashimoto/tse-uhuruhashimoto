@@ -142,14 +142,17 @@ int crawler(char *seedURL, char *dirname, int depth) {
 					char *next_url;
 					// get urls
 					while ((next_url = webpage_getNextURL(page, &pos)) != NULL) {
-						// try to insert it into the hashtable
-						if (hashtable_insert(table, next_url, "")) {
-							// if it hasn't been seen before (insertion successful)
-							// make into a webpage
-							int ndepth = webpage_getDepth(page);
-							webpage_t *newpage = webpage_new(next_url, ++ndepth, NULL);
-							// put in bag
-							bag_insert(bag, newpage);
+						//if the url is internal
+						if (IsInternalURL(next_url)) {
+							// try to insert it into the hashtable
+							if (hashtable_insert(table, next_url, "")) {
+								// if it hasn't been seen before (insertion successful)
+								// make into a webpage
+								int ndepth = webpage_getDepth(page);
+								webpage_t *newpage = webpage_new(next_url, ++ndepth, NULL);
+								// put in bag
+								bag_insert(bag, newpage);
+							}
 						}
 					}
 				}
@@ -170,7 +173,7 @@ int crawler(char *seedURL, char *dirname, int depth) {
 // copy to allocate first url
 // responsiblity of caller to free returned pointer
 char *copyURL(char *url) {
-	char *url_copy = count_malloc(sizeof(char)*strlen(url)); // first copy; second is in set line 54
+	char *url_copy = count_malloc(sizeof(char)*(strlen(url)+1)); // first copy; second is in set line 54
 	strcpy(url_copy, url); // (destination, source)
 	url_copy[strlen(url)] = '\0'; // set nul terminator just in case
 	return url_copy;
