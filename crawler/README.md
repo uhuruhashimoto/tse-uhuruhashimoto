@@ -17,11 +17,11 @@ To run, use `./crawler URL dirname depth` where:
 ## Testing
 To test the crawler (output redirected to `testing.out`), run `make test` or directly test to stdout with `testing.sh`. 
 
-*Note: this creates nested storage directories in the home directory of the user. Inital testing currently writes twice to THE SAME DIRECTORY for its first test (letters at depth 0), and then writes to successive directories.*
+*Note: this creates nested storage directories in the current directory of the user. Inital testing currently writes twice to THE SAME DIRECTORY for its first test (letters at depth 0), and then writes to successive directories.*
 
 *Note: uncomment the commented test in testing.sh to test the wiki safe seed at depth 2. This test creates 1675 files under test/wiki/wiki-2 and takes ~30 minutes to run.*
 
-To enable file overwrite checks when writing data, run `make safe` before testing. This will preserve data files within the test directory, and issue corresponding warnings within the testing output file. 
+To enable file overwrite checks when writing data, run `make safe` before testing. This will preserve data files within the test directory, and issue corresponding warnings within the testing output file if any attempts are made to overwrite existing files. 
 
 *PLEASE NOTE: because common.a is a static library, running `make` after `make safe` will not recompile the object files, and the file overwrite check will remain in force during testing. To remove this, the user must run `make clean` before recompiling and testing.*
 
