@@ -23,7 +23,7 @@ $(EXECUTABLE): $(OBJS) $(LIB)
 
 #no overwrites
 safe: ../libcs50/libcs50.a
-	make safe -C $(COMDIR)
+	make -C $(COMDIR) safe
 	$(CC) $(FLAGS) -o $(EXECUTABLE) $(CFILE) $(LIB)
 
 test: 

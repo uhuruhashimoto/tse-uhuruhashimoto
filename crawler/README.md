@@ -12,4 +12,11 @@ To run, use `./crawler URL dirname depth` where:
 -   'depth' is a non-negative integer specifying the depth at which the crawler
     should crawl.
 
-To clean, use `make clean` (which also cleans libraries).
+To test the crawler (output redirected to `testing.out`), run `make test` or directly test to stdout with `testing.sh`.
+
+To enable file overwrite checks when writing data, run `make safe` before testing. This will preserve data files within the test directory, and issue corresponding warnings within the testing output file. 
+
+* PLEASE NOTE: because common.a is a static library, running `make` after `make safe` will not recompile the
+object files, and the file overwrite check will remain in force during testing. To remove this, the user must run `make clean` before recompiling and testing. *
+
+To clean, use `make clean` (which also cleans libraries). 

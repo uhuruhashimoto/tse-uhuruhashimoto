@@ -27,13 +27,10 @@ largedepth=100
 # non-internal URL
 ./crawler $externalseed $dirA $depthA
 
-# safe mode - file overwrite check enabled
-#make safe
-#./crawler $seedA $dirA $depthA
-#./crawler $seedA $dirA $depthA
-#make clean
-
 ################### TEST SITE ####################
+# please note: if not in safe mode (file overwrite check enabled), 
+# data will be overwritten and test directory will contain data from depth 3.
+
 # DEPTH 0
 ./crawler $seedA $dirA $depthA
 # DEPTH 1

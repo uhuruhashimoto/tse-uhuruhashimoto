@@ -1,0 +1,11 @@
+Error: fewer than mininmum number of arguments.
+ Usage: ./crawler seedURL pageDirectory maxDepth
+Error: fewer than mininmum number of arguments.
+ Usage: ./crawler seedURL pageDirectory maxDepth
+Error: fewer than mininmum number of arguments.
+ Usage: ./crawler seedURL pageDirectory maxDepth
+Error: exceeded max number of arguments.
+ Usage: ./crawler seedURL pageDirectory maxDepth
+Error: A negative depth -3 was provided.
+Error: Depth 100 exceeded maximum depth.
+Error: Seed URL http://google.com/ is not internal

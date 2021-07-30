@@ -44,7 +44,7 @@ void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id) {
 	char *filename = filenameCreator(dirname, strnum); //allocated
     FILE *fp = NULL;
 
-#ifndef NOOVERWRITE
+#ifdef NOOVERWRITE
 	// OVERWRITE CHECKS
 	fp = fopen(filename, "r");
 	if (fp != NULL) { // if file exists
