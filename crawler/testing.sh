@@ -1,8 +1,7 @@
 # Testing file for common Crawler edge cases
 
-### Uncomment code at line 67 to run wiki at depth 2. This test creates 1675 files 
-# under test/wiki/wiki-2 and takes ~30 minutes to run (with the build-in pagefetcher delay). 
-# If not active, directory wiki-2 will simply be created empty. ###
+### Uncomment code at line 68-69 to run wiki at depth 2. This test creates 1675 files 
+# under test/wiki/wiki-2 and takes ~30 minutes to run (with the build-in pagefetcher delay). ###
 
 seedA=http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
 seedB=http://cs50tse.cs.dartmouth.edu/tse/wikipedia/index.html
@@ -22,7 +21,7 @@ rm -rf $dirB{0..2}
 rm -rf $dirC{0..1}
 
 mkdir -p $dirA-{0..3}
-mkdir -p $dirB-{0..2}
+mkdir -p $dirB-{0..1}
 mkdir -p $dirC-{0..1}
 
 # incorrect num of input arguments
@@ -65,6 +64,7 @@ mkdir -p $dirC-{0..1}
 # DEPTH 1
 ./crawler $seedB $dirB-1 1
 # DEPTH 2
+# mkdir -p $dirB-2
 #./crawler $seedB $dirB-2 2
 
 ##### TOSCRAPE #####
