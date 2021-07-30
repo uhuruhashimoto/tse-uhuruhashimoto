@@ -1,8 +1,11 @@
 # Testing file for common Crawler edge cases
 
-seedA=http://cs50tse.cs.dartmouth.edu/tse/letters/
+seedA=http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
 externalseed=http://google.com/
 dirA=test
+dirB=test1
+dirC=test2
+dirD=test3
 depthA=0
 depthB=1
 depthC=2
@@ -33,11 +36,13 @@ largedepth=100
 
 # DEPTH 0
 ./crawler $seedA $dirA $depthA
+# DEPTH 0 - SAME DIRECTORY (overwrite check)
+./crawler $seedA $dirA $depthA
 # DEPTH 1
-./crawler $seedA $dirA $depthB
+./crawler $seedA $dirB $depthB
 # DEPTH 2
-./crawler $seedA $dirA $depthC
+./crawler $seedA $dirC $depthC
 # DEPTH 3
-./crawler $seedA $dirA $depthD
+./crawler $seedA $dirD $depthD
 
 
