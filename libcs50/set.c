@@ -51,7 +51,7 @@ setnode_new(const char *key, void *item)
 	} 
 	else { 
 		if (key != NULL) { //if key is valid
-			char *newkey = count_malloc(sizeof(char)*strlen(key)); //1. allocate key (later freed in deletion function)
+			char *newkey = count_malloc(sizeof(char)*(strlen(key)+1)); //1. allocate key (later freed in deletion function)
 			newkey = strcpy(newkey, key); //2. copy key
 			if (newkey != NULL) {
 				node->key = newkey; //create new node with key and item 
