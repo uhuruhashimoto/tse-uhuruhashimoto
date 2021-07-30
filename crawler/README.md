@@ -14,7 +14,7 @@ To run, use `./crawler URL dirname depth` where:
 
 To test the crawler (output redirected to `testing.out`), run `make test` or directly test to stdout with `testing.sh`. 
 
-*Note: this assumes the existence of storage directories, `./test`, `./test1`, `./test2`, and `./test3` with write permissions. Inital testing currently writes twice to THE SAME DIRECTORY for its first test, and then writes to successive directories*
+*Note: this assumes the existence of storage directories, `./test`, `./test1`, `./test2`, and `./test3` with write permissions. Inital testing currently writes twice to THE SAME DIRECTORY for its first test, and then writes to successive directories.*
 
 To enable file overwrite checks when writing data, run `make safe` before testing. This will preserve data files within the test directory, and issue corresponding warnings within the testing output file. 
 
