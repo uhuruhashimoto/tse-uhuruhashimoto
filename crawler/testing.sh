@@ -50,7 +50,7 @@ mkdir -p $dirC-{0..1}
 ##### LETTERS #####
 # DEPTH 0
 ./crawler $seedA $dirA-0 0
-# DEPTH 0 - SAME DIRECTORY (overwrite check seen in testing.out)
+# DEPTH 0 - SAME DIRECTORY (overwrite warning should be seen in testing.out)
 ./crawler $seedA $dirA-0 0
 # DEPTH 1
 ./crawler $seedA $dirA-1 1
