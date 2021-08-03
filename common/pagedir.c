@@ -107,3 +107,19 @@ char *intToString(int num) {
     snprintf(strnum, strlen, "%d", num);
     return strnum;
 }
+
+// Lab 4 helper - checks if a directory is a crawler-produced/reachable directory
+// by opening a file dir/.crawler with read permissions
+bool isCrawlerDirectory(char *dirname) {
+    //allocate new string
+    char *filename = ".crawler"; //null terminated file name
+    char *crawlerfile = filenameCreator(dirname, filename);
+    FILE *fp = NULL;
+    if ((fp = fopen(crawlerfile, "r")) == NULL) {
+        free(crawlerfile);
+        return false;
+    } else {
+        free(crawlerfile);
+        return true;
+    }
+}
