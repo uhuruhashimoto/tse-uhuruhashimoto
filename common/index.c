@@ -23,6 +23,16 @@
 typedef hashtable_t index_t; 
 
 /******************** FUNCTIONS **************************/
+index_t *index_new(const int num_slots);
+bool index_insert(index_t *index, const char *key, counters_t *item);
+counters_t *index_find(index_t *index, const char *key);
+void index_delete(index_t *index, void (*itemdelete)(counters_t *item) );
+bool index_save(index_t *index, const char *filename);
+index_t *index_load(char *filename);
+
+// ----- print helpers ----- //
+static void setprint(FILE *fp, const char *name, counters_t *counter);
+static void counterprint(FILE *fp, const int key, const int item);
 
 /******************** WRAPPER MODULES **************************/
 
@@ -49,9 +59,6 @@ void index_delete(index_t *index, void (*itemdelete)(counters_t *item) ) {
 
 /******************** NEW MODULES **************************/
 // (called by indexer to create an index)
-
-void hashtable_iterate(hashtable_t *ht, void *arg,
-                       void (*itemfunc)(void *arg, const char *key, void *item) )
 
 //--------------------- SAVE -------------------------------//
 // save index to external file 
@@ -88,7 +95,37 @@ static void counterprint(FILE *fp, const int key, const int item) {
 //--------------------- LOAD -------------------------------//
 // load from external index-created file
 // file format is [word] [doc_id num] [...]
-index_t *index_load() {
-	//get number of lines in file using file apis
+index_t *index_load(char *filename) {
+	//check permissions
+	FILE *fp = NULL;
+    if ((fp = fopen(filename, "r")) != NULL) {
+        return NULL;
+    } 
+
+	// get number of lines in file using file apis
+	int numlines = lines_in_file(fp);
+	index_t *index = index_new(numlines); //ht has same number of slots as number of words 
+	// for each line, create counters and insert (word, counters) to hashtable
+	for (int i = 0; i < numlines; i++) {
+		char *word = freadwordp(fp);
+		index_insert(word, getCounters(fp)); //insert counters
+		free(word);
+	}
+	fclose(fp);
 }
+
+// create counters by scanning pairs of integers until newline character
+static counters_t *getCounters(FILE *fp) {
+	counters_t *counter = counters_new();
+	// scan integer pairs into counter
+	int doc_id = 0;
+	int num = 0;
+
+	while ((fscanf(fp, "%d %d", doc_id, num)) != "\n") { //TODO: this won't work
+		counters_set(doc_id, key);
+	}
+
+	return counter;
+}
+
 
