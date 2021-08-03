@@ -1,11 +1,8 @@
 /*
-* index - a file that provides modules to build an index, which maps words to repetitions per document 
-* (by use of a hashtable of words to counters). 
+* index.c - an implementation of hashtable specific to the indexer
+* hashtable maps a key to an item, where (key) is a word, and (item) is a counter of (doc id, num) objects
+* the total data structure is an index, used by the indexer and querier
 * 
-* Basically a hashtable that maps to counters instead of sets 
-*
-* It maps (k, item): word -> counters (doc id -> repetitions in file)
-*
 * Uhuru Hashimoto CS50 21X
 */
 
@@ -21,109 +18,44 @@
 #include "../libcs50/webpage.h"
 #include "../libcs50/file.h"
 #include "../common/pagedir.h"
-#define TABLE_SIZE 500
 
-typedef struct index {
-    counters_t **table;
-    int size;
-} index_t;
+//rename hashtable_t to index_t
+typedef hashtable_t index_t; 
 
-/************************ HT WRAPPER FUNCTIONS *******************************/
-// ht wrapper: new index
-// creates new index object: a hashtable with counters as objects
+/******************** FUNCTIONS **************************/
+
+/******************** WRAPPER MODULES **************************/
+
+//creator
 index_t *index_new(const int num_slots) {
-    index_t *index = count_malloc(sizeof(index_t)); 
-	if (index != NULL) {
-		index->table = count_calloc(num_slots, sizeof(counters_t *)); //allocates slots next to each other
-		if (index->table == NULL) {
-			return NULL; //no memory 
-		} else {
-			index->size = num_slots; //just for easy access
-		}
-		return index;
-	} else {
-		return NULL;
-	}
+	return hashtable_new(num_slots);
 }
 
-// ht wrapper: insert new word to index (one new counters)
-bool index_insert(index_t *index, const char *key, const int doc_id) {
-    if (index != NULL && key != NULL && doc_id > 0) {
-		int i = JenkinsHash(key, index->size); //get index for node
-		if (index->table[i] == NULL) { //if node is not initialized
-			index->table[i] = counters_new(); //initalize node
-		}
-        //regardless of whether the counters is in the table, use counters_add
-        // to add or increment it
-		if (counters_add(index->table[i], doc_id) != 0) { //if addition succeeds
-                return true;
-            } else {
-                return false; //addition failed
-            }
-	} else {
-		return false; //null checks fail
-	}
+//insertion
+bool index_insert(index_t *index, const char *key, counters_t *item) {
+	return hashtable_insert(index, key, item);
 }
 
-// ht wrapper: find word
-// returns pointer to counters object
-// returns number associated with key and doc id
-// zero if error
-int index_find(index_t *index, const char *key, const int doc_id) {
-    if (index != NULL && key != NULL) {
-		int i = JenkinsHash(key, index->size); //go to slot
-		return counters_get(index->table[i], doc_id); //counters error check (0 if error)
-	}
-	else {
-		return 0; //null input
-	}
+//find (returns a counter)
+counters_t *index_find(index_t *index, const char *key) {
+	return hashtable_find(index, key);
 }
 
-//ht wrapper: delete index
-// free each counter of the index
-index_delete(index_t *index) {
-    if (index != NULL) { //if null input, do nothing
-		for (int i = 0; i < index->size; i++) {
-			counters_delete(index->table[i]); //free counters
-		}
-		count_free(index->table); //free the table itself
-		count_free(index); //free the index data structure
-	}
-
+//delete (deletes counters)
+void index_delete(index_t *index, void (*itemdelete)(counters_t *item) ) {
+	hashtable_delete(index, itemdelete);
 }
 
-/************************ NEW FUNCTIONALITY *******************************/
 
-//NEW: saves index to external file 
+/******************** NEW MODULES **************************/
+// (called by indexer to create an index)
+
+//save index to external file
 bool index_save(index_t *index, const char *filename) {
-    FILE *fp = openFile(filename);
-    for (int i = 0; i < index->size; i++) {
-        //for each word
-        fprintf(fp, "%s", index->table[i]);
-        printWordNumbers(index->table[i], fp); //TODO: crap, which key is the word? how t get it?
-        fprintf(fp, "\n");
-    }
-    fclose(fp);
+
 }
 
-//save helper
-void *openFile(const char *filename) {
-    FILE *fp = NULL;
-    if ((fp = fopen(filename, "w") != NULL) {
-        return (void *)fp;
-    } else {
-        return NULL;
-    }
-}
-
-//save helper
-//assumes opened file
-//iterates through counters and prints each number followed by a space
-void printWordNumbers(counters_t *counter, FILE *fp) {
-    
-}
-
-//NEW: loads index from external INDEX file
-index_load() {
+//load from external index-created file
+index_t *index_load() {
 
 }
