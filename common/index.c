@@ -50,11 +50,40 @@ void index_delete(index_t *index, void (*itemdelete)(counters_t *item) ) {
 /******************** NEW MODULES **************************/
 // (called by indexer to create an index)
 
-//save index to external file
+void hashtable_iterate(hashtable_t *ht, void *arg,
+                       void (*itemfunc)(void *arg, const char *key, void *item) )
+
+//SAVE
+//save index to external file 
 bool index_save(index_t *index, const char *filename) {
+	//check permissions
+	FILE *fp = NULL;
+    if ((fp = fopen(filename, "w")) != NULL) {
+        return false;
+    } 
+    
+    //iterate through index and write to file
+    //for each set in ht, print the word and iterate through the set to print numbers
+    hashtable_iterate(index, fp, setprint);
+
+    fclose(fp);
+    return true;
 
 }
 
+//on each line, write a word, pass counters a print function, and write \n
+static void setprint(FILE *fp, const char *name, counters_t *counter) {
+	fprintf(fp, "%s ", name); //print word
+	counters_iterate(counter, fp, counterprint); //print counters
+	fprintf(fp, "\n"); //print newline char
+	
+}
+
+static void counterprint(FILE *fp, const int key, const int item) {
+	fprintf(fp, "%d %d ", key, item);
+}
+
+//LOAD
 //load from external index-created file
 index_t *index_load() {
 
