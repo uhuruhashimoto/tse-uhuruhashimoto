@@ -50,8 +50,14 @@ int main (const int argc, char **argv) {
 
 	//build
 	index_t *index = index_build(dirname);
+	if (index == NULL) {
+		fprintf(stderr, "Error: created null index.\n");
+	}
 	//save
-	index_save(index, filename);
+	if (!index_save(index, filename)) {
+		fprintf(stderr, "Error: failed to save index.\n");
+		return ++status;
+	}
 
 	//delete
 	index_delete(index, itemdelete);

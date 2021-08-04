@@ -67,7 +67,7 @@ void index_delete(index_t *index, void (*itemdelete)(void *item) ) {
 bool index_save(index_t *index, const char *filename) {
 	//check permissions
 	FILE *fp = NULL;
-    if ((fp = fopen(filename, "w")) != NULL) {
+    if ((fp = fopen(filename, "w")) == NULL) {
         return false;
     } 
     

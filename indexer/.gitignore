@@ -1,4 +1,4 @@
 *.o
 indexer
 indextest
-testfile
+testfile*

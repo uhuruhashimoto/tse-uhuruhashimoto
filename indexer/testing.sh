@@ -1,4 +1,6 @@
 # Testing file for indexer and indextest
+rm -f testfile0 testfile1
+touch testfile0 testfile1
 
 # No args
 ./indexer 
@@ -13,6 +15,8 @@
 ./indexer wrongdir testfile
 
 # Actual test
-echo "Real Test..."
-./indexer ../crawler/test/letters/letters-0 testfile
+echo "Testing letters depth 0..."
+./indexer ../crawler/test/letters/letters-0 testfile0
 
+echo "Testing letters depth 1..."
+./indexer ../crawler/test/letters/letters-1 testfile1
