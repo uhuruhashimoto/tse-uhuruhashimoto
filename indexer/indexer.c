@@ -36,11 +36,12 @@ int main (const int argc, char **argv) {
 	// check arguments
 	if (argc < 3 || argc > 3) {
 		fprintf(stderr, "Error: wrong number of arguments. Usage:\n"
-			"./indexer pageDirectory indexFilename");
+			"./indexer pageDirectory indexFilename\n");
 		return ++status;
 	}
 	
 	if (!isCrawlerDirectory(argv[1])) {
+		fprintf(stderr, "Error: non-crawler directory provided.\n");
 		return ++status;
 	}
 
@@ -101,11 +102,17 @@ static void
 	char *word = NULL;
 	while ((word = freadwordp(fp)) != NULL) {
 		counters_t *counter = index_find(index, word);
-		//if word is already in index
-		if (counter != NULL) {
+		// if word is not already in index, make a new counter and add it
+		if (counter == NULL) {
+			counter = counters_new();
+			counters_add(counter, doc_id);
+			index_insert(index, word, counter);
+		}
+		else { // if it is, just add to the counter
 			counters_add(counter, doc_id);
 		}
-		//free pointer for reuse in loop
+		
+		// free pointer for reuse in loop
 		free(word); 
 	}
 

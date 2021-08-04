@@ -26,13 +26,13 @@ typedef hashtable_t index_t;
 index_t *index_new(const int num_slots);
 bool index_insert(index_t *index, const char *key, counters_t *item);
 counters_t *index_find(index_t *index, const char *key);
-void index_delete(index_t *index, void (*itemdelete)(counters_t *item) );
+void index_delete(index_t *index, void (*itemdelete)(void *item)  );
 bool index_save(index_t *index, const char *filename);
 index_t *index_load(char *filename);
 
 // ----- print helpers ----- //
-static void setprint(FILE *fp, const char *name, counters_t *counter);
-static void counterprint(FILE *fp, const int key, const int item);
+static void setprint(void *file, const char *name, void *item);
+static void counterprint(void *file, const int key, const int item);
 static counters_t *getCounters(FILE *fp);
 
 /******************** WRAPPER MODULES **************************/
@@ -53,7 +53,8 @@ counters_t *index_find(index_t *index, const char *key) {
 }
 
 //delete (deletes counters)
-void index_delete(index_t *index, void (*itemdelete)(counters_t *item) ) {
+//item is counters (void to silence compiler warning)
+void index_delete(index_t *index, void (*itemdelete)(void *item) ) {
 	hashtable_delete(index, itemdelete);
 }
 
@@ -80,7 +81,9 @@ bool index_save(index_t *index, const char *filename) {
 
 // HELPERS
 // on each line, write a word, pass counters a print function, and write \n
-static void setprint(FILE *fp, const char *name, counters_t *counter) {
+static void setprint(void *file, const char *name, void *item) {
+	FILE *fp = file;
+	counters_t *counter = item;
 	fprintf(fp, "%s ", name); //print word
 	counters_iterate(counter, fp, counterprint); //print counters
 	fprintf(fp, "\n"); //print newline char
@@ -88,7 +91,8 @@ static void setprint(FILE *fp, const char *name, counters_t *counter) {
 }
 
 // print doc id - num pairs
-static void counterprint(FILE *fp, const int key, const int item) {
+static void counterprint(void *file, const int key, const int item) {
+	FILE *fp = file;
 	fprintf(fp, "%d %d ", key, item);
 }
 
