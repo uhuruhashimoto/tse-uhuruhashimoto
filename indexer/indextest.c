@@ -44,7 +44,7 @@ int main(const int argc, char **argv) {
 
 	index_t *index = index_load(oldfile);
 	if (index == NULL) {
-		fprintf(stderr, "Error: created null index.\n");
+		fprintf(stderr, "Error: loaded null index.\n");
 	}
 
 	//save

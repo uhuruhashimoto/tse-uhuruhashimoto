@@ -103,7 +103,7 @@ static void counterprint(void *file, const int key, const int item) {
 index_t *index_load(char *filename) {
 	//check permissions
 	FILE *fp = NULL;
-    if ((fp = fopen(filename, "r")) != NULL) {
+    if ((fp = fopen(filename, "r")) == NULL) {
         return NULL;
     } 
 
@@ -127,13 +127,9 @@ static counters_t *getCounters(FILE *fp)
 	// scan integer pairs into counter
 	int doc_id = 0;
 	int num = 0;
-	char temp = ' ';
-	fscanf(fp, "%d %d%c", &doc_id, &num, &temp);
-	while (temp != '\n') { 
+	while (fscanf(fp, "%d %d ", &doc_id, &num) == 2) {
 		counters_set(counter, doc_id, num);
-		fscanf(fp, "%d %d%c", &doc_id, &num, &temp);
 	}
-
 	return counter;
 }
 
