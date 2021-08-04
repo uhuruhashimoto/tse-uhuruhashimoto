@@ -120,9 +120,11 @@ static counters_t *getCounters(FILE *fp) {
 	// scan integer pairs into counter
 	int doc_id = 0;
 	int num = 0;
-
-	while ((fscanf(fp, "%d %d", doc_id, num)) != "\n") { //TODO: this won't work
+	char temp = ' ';
+	fscanf(fp, "%d %d%c", doc_id, num, temp);
+	while (temp != "\n") { 
 		counters_set(doc_id, key);
+		fscanf(fp, "%d %d%c", doc_id, num, temp);
 	}
 
 	return counter;

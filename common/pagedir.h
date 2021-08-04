@@ -40,3 +40,9 @@ char *filenameCreator(char *dirname, char *filename);
 * It is left to the user to free the returned string.
 */
 char *intToString(int num);
+
+/*
+* check if a specified dirname is a crawler-produced directory
+* by opening a dirname/.crawler file with read permissions
+*/
+bool isCrawlerDirectory(char *dirname);
