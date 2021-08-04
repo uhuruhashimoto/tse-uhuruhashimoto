@@ -18,6 +18,8 @@
 #include "../libcs50/webpage.h"
 #include "../libcs50/file.h"
 #include "../common/pagedir.h"
+#include "../common/index.h"
+#define NUM_SLOTS 300
 
 
 /******************** FUNCTION DECLARATIONS **************************/
@@ -33,8 +35,8 @@ int main (const int argc, char **argv) {
 
 	// check arguments
 	if (argc < 3 || argc > 3) {
-		fprintf(stderr, "Error: wrong number of arguments. Usage:\n
-			./indexer pageDirectory indexFilename");
+		fprintf(stderr, "Error: wrong number of arguments. Usage:\n"
+			"./indexer pageDirectory indexFilename");
 		return ++status;
 	}
 	
@@ -64,7 +66,7 @@ int main (const int argc, char **argv) {
 index_t *
 	index_build(char *dirname) 
 {
-	index_t *index = index_new();
+	index_t *index = index_new(NUM_SLOTS);
 	//in directory, scan each file
 	int doc_id = 1;
 	char *fileid = intToString(doc_id);
@@ -101,7 +103,7 @@ static void
 		counters_t *counter = index_find(index, word);
 		//if word is already in index
 		if (counter != NULL) {
-			counter_add(doc_id);
+			counters_add(counter, doc_id);
 		}
 		//free pointer for reuse in loop
 		free(word); 
@@ -111,5 +113,5 @@ static void
 
 //deletion helper
 static void itemdelete(counters_t *item) {
-	counter_delete(item);
+	counters_delete(item);
 }

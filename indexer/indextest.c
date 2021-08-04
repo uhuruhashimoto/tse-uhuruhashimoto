@@ -19,6 +19,8 @@
 #include "../libcs50/webpage.h"
 #include "../libcs50/file.h"
 #include "../common/pagedir.h"
+#include "../common/index.h"
+#define NUM_SLOTS 300
 
 
 /******************** FUNCTION DECLARATIONS **************************/
@@ -32,16 +34,15 @@ int main(const int argc, char **argv) {
 
 	// check arguments: just the number
 	if (argc < 3 || argc > 3) {
-		fprintf(stderr, "Error: wrong number of arguments. Usage:\n
-			./indexer pageDirectory indexFilename");
+		fprintf(stderr, "Error: wrong number of arguments. Usage:\n"
+			"./indexer pageDirectory indexFilename");
 		return ++status;
 	}
 
 	char *oldfile = argv[1];
 	char *newfile = argv[2];
 
-	index_t *index = index_new();
-	index_load(index, oldfile);
+	index_t *index = index_load(oldfile);
 	index_save(index, newfile);
 
 	index_delete(index, itemdelete);
@@ -51,5 +52,5 @@ int main(const int argc, char **argv) {
 
 // helper
 static void itemdelete(counters_t *item) {
-	counter_delete(item);
+	counters_delete(item);
 }

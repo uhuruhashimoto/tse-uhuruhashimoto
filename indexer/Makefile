@@ -1,6 +1,6 @@
 # Makefile for indexer module
 
-OBJS = crawler.o
+
 FLAGS = -Wall -pedantic -std=c11 -ggdb
 CC = gcc
 MAKE = make
@@ -10,15 +10,15 @@ COMDIR = ../common
 LIB = ../common/common.a ../libcs50/libcs50.a
 EXECUTABLE1 = indexer
 EXECUTABLE2 = indextest
-CFILE1 = indexer.o
-CFILE2 = indextest.o
+CFILE1 = indexer.c
+CFILE2 = indextest.c
 
 all: indexer indextest
 
-$(EXECUTABLE1): $(OBJS) $(LIB)
+$(EXECUTABLE1): indexer.o $(LIB)
 	$(CC) $(FLAGS) -o $(EXECUTABLE1) $(CFILE1) $(LIB)
 
-$(EXECUTABLE2): $(OBJS) $(LIB)
+$(EXECUTABLE2): indextest.o $(LIB)
 	$(CC) $(FLAGS) -o $(EXECUTABLE2) $(CFILE2) $(LIB)
 
 # library dependencies
@@ -28,15 +28,11 @@ $(EXECUTABLE2): $(OBJS) $(LIB)
 ../common/common.a:
 	$(MAKE) -C $(COMDIR)
 
-# driver dependencies
-indexer.o: indexer.h
-
-indextest.o: indextest.h
 
 #no overwrites
 safe: ../libcs50/libcs50.a
 	make -C $(COMDIR) safe
-	$(CC) $(FLAGS) -o $(EXECUTABLE) $(CFILE) $(LIB)
+	make all
 
 test: 
 	make
@@ -45,7 +41,8 @@ test:
 .PHONY: safe test clean 
 
 clean: 
-	rm -f $(EXECUTABLE)
+	rm -f $(EXECUTABLE1)
+	rm -f $(EXECUTABLE2)
 	rm -f *.o 
 	$(CLEAN) -C $(LIBDIR)
 	$(CLEAN) -C $(COMDIR)

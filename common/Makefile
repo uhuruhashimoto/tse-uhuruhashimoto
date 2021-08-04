@@ -3,7 +3,7 @@
 
 CFLAGS = -Wall -pedantic -std=c11 -ggdb
 LIB = common.a
-OBJS = pagedir.o
+OBJS = pagedir.o index.o
 
 $(LIB): $(OBJS)
 	ar cr $(LIB) $(OBJS)
@@ -15,6 +15,7 @@ safe:
 
 # dependencies 
 pagedir.o: pagedir.h
+index.o: index.h
 
 .PHONY: clean
 

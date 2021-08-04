@@ -33,6 +33,7 @@ index_t *index_load(char *filename);
 // ----- print helpers ----- //
 static void setprint(FILE *fp, const char *name, counters_t *counter);
 static void counterprint(FILE *fp, const int key, const int item);
+static counters_t *getCounters(FILE *fp);
 
 /******************** WRAPPER MODULES **************************/
 
@@ -108,10 +109,11 @@ index_t *index_load(char *filename) {
 	// for each line, create counters and insert (word, counters) to hashtable
 	for (int i = 0; i < numlines; i++) {
 		char *word = freadwordp(fp);
-		index_insert(word, getCounters(fp)); //insert counters
+		index_insert(index, word, getCounters(fp)); //insert counters
 		free(word);
 	}
 	fclose(fp);
+	return index;
 }
 
 // create counters by scanning pairs of integers until newline character
@@ -122,10 +124,10 @@ static counters_t *getCounters(FILE *fp)
 	int doc_id = 0;
 	int num = 0;
 	char temp = ' ';
-	fscanf(fp, "%d %d%c", doc_id, num, temp);
-	while (temp != "\n") { 
-		counters_set(doc_id, key);
-		fscanf(fp, "%d %d%c", doc_id, num, temp);
+	fscanf(fp, "%d %d%c", &doc_id, &num, &temp);
+	while (temp != '\n') { 
+		counters_set(counter, doc_id, num);
+		fscanf(fp, "%d %d%c", &doc_id, &num, &temp);
 	}
 
 	return counter;
