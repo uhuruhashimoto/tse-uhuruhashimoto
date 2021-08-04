@@ -35,7 +35,7 @@ int main(const int argc, char **argv) {
 	// check arguments: just the number
 	if (argc < 3 || argc > 3) {
 		fprintf(stderr, "Error: wrong number of arguments. Usage:\n"
-			"./indexer pageDirectory indexFilename");
+			"./indexer pageDirectory indexFilename\n");
 		return ++status;
 	}
 
@@ -43,7 +43,15 @@ int main(const int argc, char **argv) {
 	char *newfile = argv[2];
 
 	index_t *index = index_load(oldfile);
-	index_save(index, newfile);
+	if (index == NULL) {
+		fprintf(stderr, "Error: created null index.\n");
+	}
+
+	//save
+	if (!index_save(index, newfile)) {
+		fprintf(stderr, "Error: failed to save index.\n");
+		return ++status;
+	}
 
 	index_delete(index, itemdelete);
 

@@ -26,7 +26,7 @@
 index_t *index_build(char *dirname);
 static void index_page(index_t *index, FILE *fp, int doc_id);
 static void itemdelete(counters_t *item);
-
+static int stringToInt(char *string);
 
 /******************** DRIVER **************************/
 // driver
@@ -106,7 +106,15 @@ static void
 	// read words from webpage
 	// for each word, add one to its counter with key (doc_id)
 	char *word = NULL;
-	while ((word = freadwordp(fp)) != NULL) {
+	int pos = 0;
+	char *url = freadlinep(fp);
+	char *chardep = freadlinep(fp);
+	int depth = stringToInt(chardep);
+	char *html = freaduntil(fp, NULL);
+
+	webpage_t *webpage = webpage_new(url, depth, html);
+
+	while ((word = webpage_getNextWord(webpage, &pos)) != NULL) {
 		counters_t *counter = index_find(index, word);
 		// if word is not already in index, make a new counter and add it
 		if (counter == NULL) {
@@ -117,14 +125,20 @@ static void
 		else { // if it is, just add to the counter
 			counters_add(counter, doc_id);
 		}
-		
 		// free pointer for reuse in loop
 		free(word); 
-	}
+  	}
+
+	free(chardep);
+	webpage_delete(webpage); //frees url and html strings autmatically
 
 }
 
 //deletion helper
 static void itemdelete(counters_t *item) {
 	counters_delete(item);
+}
+
+static int stringToInt(char *string) {
+	return strtol(string, NULL, 10);
 }
