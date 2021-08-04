@@ -115,7 +115,8 @@ index_t *index_load(char *filename) {
 }
 
 // create counters by scanning pairs of integers until newline character
-static counters_t *getCounters(FILE *fp) {
+static counters_t *getCounters(FILE *fp) 
+{
 	counters_t *counter = counters_new();
 	// scan integer pairs into counter
 	int doc_id = 0;
