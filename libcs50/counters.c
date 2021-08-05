@@ -2,6 +2,12 @@
 * counters.c - file containing modules to implement a counter
 * (set-like data structure which incrememnts a value associated with a specific key)
 *
+* Note: this file has been modified for the Indexer lab. Search "ADDITION" for notable 
+* changes to counterset insertion/addition 
+* In such instances, prev. code was:
+* new->next = ctrs->head;
+* ctrs->head = new;
+* 
 * Uhuru Hashimoto CS50 21X
 */
 #include <stdio.h>
@@ -124,8 +130,6 @@ int counters_add(counters_t *ctrs, const int key)
 				//if not found, create new node
 				countersnode_t *new = countersnode_new(key);
 				if (new != NULL) {
-					//new->next = ctrs->head;
-					//ctrs->head = new;
 
 					//ADDITION
 					if (ctrs->head == NULL) { //if ctrs is empty, head is new
@@ -138,7 +142,6 @@ int counters_add(counters_t *ctrs, const int key)
 						ctrs->tail->next = new; //add new node to tail of ctrs
 						ctrs->tail = new; //move tail pointer over
 					}
-
 					return new->count;
 				}
 				else {
@@ -189,8 +192,6 @@ bool counters_set(counters_t *ctrs, const int key, const int count)
 			countersnode_t *new = countersnode_new(key);
 				if (new != NULL) {
 					new->count = count; //change val from 1 to count
-					//new->next = ctrs->head;
-					//ctrs->head = new;
 
 					//ADDITION
 					if (ctrs->head == NULL) { //if ctrs is empty, head is new
@@ -203,7 +204,6 @@ bool counters_set(counters_t *ctrs, const int key, const int count)
 						ctrs->tail->next = new; //add new node to tail of ctrs
 						ctrs->tail = new; //move tail pointer over
 					}
-
 					return true;
 				}
 				else { //out of memory
