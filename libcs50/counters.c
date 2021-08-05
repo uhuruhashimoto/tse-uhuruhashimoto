@@ -16,6 +16,7 @@
 //1. general counter
 typedef struct counters {
 	struct countersnode *head; //pointer to head of list (initially null)
+	struct countersnode *tail; //new items added to tail; iteration remains head->tail (oldest -> newest)
 } counters_t;
 
 //2. counter node
@@ -45,6 +46,7 @@ counters_new(void)
 	}
 	else { //if the pointer works
 		new->head = NULL; //set the head to null for now
+		new->tail = NULL;
 		return new; //return pointer to counters datatype
 	}
 }
@@ -122,8 +124,21 @@ int counters_add(counters_t *ctrs, const int key)
 				//if not found, create new node
 				countersnode_t *new = countersnode_new(key);
 				if (new != NULL) {
-					new->next = ctrs->head;
-					ctrs->head = new;
+					//new->next = ctrs->head;
+					//ctrs->head = new;
+
+					//ADDITION
+					if (ctrs->head == NULL) { //if ctrs is empty, head is new
+						ctrs->head = new;
+						ctrs->tail = new;
+						new->next = NULL;
+					} 
+					else {
+						new->next = NULL; //set next pointer to null for iteration safety
+						ctrs->tail->next = new; //add new node to tail of ctrs
+						ctrs->tail = new; //move tail pointer over
+					}
+
 					return new->count;
 				}
 				else {
@@ -174,8 +189,21 @@ bool counters_set(counters_t *ctrs, const int key, const int count)
 			countersnode_t *new = countersnode_new(key);
 				if (new != NULL) {
 					new->count = count; //change val from 1 to count
-					new->next = ctrs->head;
-					ctrs->head = new;
+					//new->next = ctrs->head;
+					//ctrs->head = new;
+
+					//ADDITION
+					if (ctrs->head == NULL) { //if ctrs is empty, head is new
+						ctrs->head = new;
+						ctrs->tail = new;
+						new->next = NULL;
+					} 
+					else {
+						new->next = NULL; //set next pointer to null for iteration safety
+						ctrs->tail->next = new; //add new node to tail of ctrs
+						ctrs->tail = new; //move tail pointer over
+					}
+
 					return true;
 				}
 				else { //out of memory
