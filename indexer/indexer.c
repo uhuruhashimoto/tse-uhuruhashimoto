@@ -19,6 +19,7 @@
 #include "../libcs50/file.h"
 #include "../common/pagedir.h"
 #include "../common/index.h"
+#include "../common/word.h"
 #define NUM_SLOTS 300
 
 
@@ -115,15 +116,17 @@ static void
 	webpage_t *webpage = webpage_new(url, depth, html);
 
 	while ((word = webpage_getNextWord(webpage, &pos)) != NULL) {
-		counters_t *counter = index_find(index, word);
-		// if word is not already in index, make a new counter and add it
-		if (counter == NULL) {
-			counter = counters_new();
-			counters_add(counter, doc_id);
-			index_insert(index, word, counter);
-		}
-		else { // if it is, just add to the counter
-			counters_add(counter, doc_id);
+		if (NormalizeWord(word) && strlen(word) >= 3) { // if word can be normalized and is longer than 3 chars
+			counters_t *counter = index_find(index, word);
+			// if word is not already in index, make a new counter and add it
+			if (counter == NULL) {
+				counter = counters_new();
+				counters_add(counter, doc_id);
+				index_insert(index, word, counter);
+			}
+			else { // if it is, just add to the counter
+				counters_add(counter, doc_id);
+			}
 		}
 		// free pointer for reuse in loop
 		free(word); 
