@@ -2,7 +2,7 @@
 rm -f testfile0 testfile1 testfile2 newfile0 newfile1 newfile2
 touch testfile0 testfile1 testfile2 newfile0 newfile1 newfile2
 
-# Indexer
+############### Indexer ##################
 
 # No args
 ./indexer 
@@ -26,7 +26,7 @@ echo "Testing letters depth 1..."
 echo "Testing letters depth 2..."
 ./indexer ../crawler/test/letters/letters-2 testfile2
 
-# Indextest
+############### Indextest ##################
 
 # No args
 ./indextest 
@@ -46,7 +46,16 @@ echo "Testing indextest with depth 1..."
 echo "Testing indextest with depth 2..."
 ./indextest testfile2 newfile2
 
-# Comparison
+############### Comparison ##################
+
+echo "Comparing files..."
+d=$(diff <(sort testfile0) <(sort newfile0))
+echo "Diff 0 is $d"
+d=$(diff <(sort testfile1) <(sort newfile1))
+echo "Diff 1 is $d"
+d=$(diff <(sort testfile2) <(sort newfile2))
+echo "Diff 2 is $d"
 
 # sort and diff
-
+# diff <(sort ${data}/testfile2) <(sort ${data}/newfile2)
+# or test and testcopy
