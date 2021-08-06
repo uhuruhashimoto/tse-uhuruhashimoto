@@ -15,6 +15,7 @@ bool checkDir(char *dirname);
 void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id);
 char *filenameCreator(char *dirname, char *filename);
 char *intToString(int num);
+int stringToInt(char *string);
 
 // opens a file "crawler" in the specified directory 
 // to check its existence and write permissions
@@ -106,6 +107,11 @@ char *intToString(int num) {
     if (strnum == NULL) return NULL;
     snprintf(strnum, strlen, "%d", num);
     return strnum;
+}
+
+// Lab 4 helper - returns int value of a string
+int stringToInt(char *string) {
+	return strtol(string, NULL, 10);
 }
 
 // Lab 4 helper - checks if a directory is a crawler-produced/reachable directory

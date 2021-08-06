@@ -3,7 +3,7 @@
 
 Note: index is contained in common directory, and indexer and indextest under indexer directory. While the spec for this document only focuses on indexer, all are mentioned here because the logic for each translates most naturally with context. 
 
-## Index
+## Note on Index
 Description: Index is a collection of modules and helpers that provide the functionality of a ht-like
 data structure with counters as items. It maps a word -> doc id -> number of repetitions in document. The main APIs are: 
 
@@ -15,7 +15,7 @@ data structure with counters as items. It maps a word -> doc id -> number of rep
 - *save: writes index to external file in format per line: word doc1 num1 [doc1 num2] ...
 * New APIs (added to hashtable implementation)
 
-## Indexer
+## Design Specs: Indexer
 * driver
 Description: The indexer references index modules to build, and save a single index (provided by one crawler directory). It follows the following usage: 
 
@@ -33,7 +33,7 @@ The indexer shall:
 
 Note: no header file provided
 
-## Indextest
+## Note on Indextest
 * driver
 Description: Indextest loads an index from an index output file and compare the result to the file (testing the index_load and index_save functionality).
 It follows the following usage: 

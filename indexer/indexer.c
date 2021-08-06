@@ -27,7 +27,6 @@
 index_t *index_build(char *dirname);
 static void index_page(index_t *index, FILE *fp, int doc_id);
 static void itemdelete(counters_t *item);
-static int stringToInt(char *string);
 
 /******************** DRIVER **************************/
 // driver
@@ -141,8 +140,4 @@ static void
 //deletion helper
 static void itemdelete(counters_t *item) {
 	counters_delete(item);
-}
-
-static int stringToInt(char *string) {
-	return strtol(string, NULL, 10);
 }

@@ -42,7 +42,13 @@ char *filenameCreator(char *dirname, char *filename);
 char *intToString(int num);
 
 /*
+* Lab 4 helper - returns int value of a string
+*/
+int stringToInt(char *string);
+
+/*
 * check if a specified dirname is a crawler-produced directory
 * by opening a dirname/.crawler file with read permissions
 */
 bool isCrawlerDirectory(char *dirname);
+
