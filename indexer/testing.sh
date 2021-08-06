@@ -46,3 +46,7 @@ echo "Testing indextest with depth 1..."
 echo "Testing indextest with depth 2..."
 ./indextest testfile2 newfile2
 
+# Comparison
+
+# sort and diff
+
