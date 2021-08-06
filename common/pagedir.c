@@ -120,6 +120,7 @@ bool isCrawlerDirectory(char *dirname) {
         return false;
     } else {
         free(crawlerfile);
+        fclose(fp);
         return true;
     }
 }

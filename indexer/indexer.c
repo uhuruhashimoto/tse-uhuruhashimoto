@@ -86,6 +86,7 @@ index_t *
 
 		free(fileid);
 		free(filename);
+		fclose(fp);
 
 		//reset variables
 		doc_id++;

@@ -34,6 +34,10 @@ safe: ../libcs50/libcs50.a
 	make -C $(COMDIR) safe
 	make all
 
+valgrind:
+	make
+	valgrind --leak-check=full --show-leak-kinds=all ./indexer ../crawler/test/letters/letters-2 testfile2
+
 test: 
 	make
 	./testing.sh &> testing.out
