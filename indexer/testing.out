@@ -1,0 +1,23 @@
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Error: non-crawler directory provided.
+Testing letters...
+Testing toscrape...
+Testing wiki...
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Error: wrong number of arguments. Usage:
+./indexer pageDirectory indexFilename
+Testing letters...
+Testing toscrape...
+Testing wiki...
+Comparing files...
+letters test successful!
+toscrape test successful!
+wiki test successful!

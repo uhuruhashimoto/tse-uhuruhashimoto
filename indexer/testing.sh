@@ -1,6 +1,30 @@
+#!/bin/bash
 # Testing file for indexer and indextest
-rm -f testfile0 testfile1 testfile2 newfile0 newfile1 newfile2
-touch testfile0 testfile1 testfile2 newfile0 newfile1 newfile2
+
+############### Variables ##################
+
+# General data path
+dir="../crawler/test" 
+letters="/letters/letters" # letters (-0)
+toscrape="/toscrape/toscrape" # toscrape (-0)
+wiki="/wiki/wiki" # wiki (-0)
+
+# Indexes (indexer)
+indexdir="./test"
+indexletters="/letters/index.letters" # letters (-0)
+indextoscrape="/toscrape/index.toscrape" # toscrape (-0)
+indexwiki="/wiki/index.wiki" # wiki (-0)
+
+# Copies (indextest)
+copyletters="/letters/copyindex.letters" # letters (-0)
+copytoscrape="/toscrape/copyindex.toscrape" # toscrape (-0)
+copywiki="/wiki/copyindex.wiki" # wiki (-0)
+
+# Prepare workspace: remove indexes and copies
+rm -rf $indexdir
+mkdir -p $indexdir/letters $indexdir/toscrape $indexdir/wiki
+touch $indexdir$indexletters-{0..3} $indexdir$indextoscrape-{0..1} $indexdir$indexwiki-{0..1}
+touch $indexdir$copyletters-{0..3} $indexdir$copytoscrape-{0..1} $indexdir$copywiki-{0..1}
 
 ############### Indexer ##################
 
@@ -16,15 +40,20 @@ touch testfile0 testfile1 testfile2 newfile0 newfile1 newfile2
 # Incorrect Dir
 ./indexer wrongdir testfile
 
-# Actual test
-echo "Testing letters depth 0..."
-./indexer ../crawler/test/letters/letters-0 testfile0
+# Actual tests
+echo "Testing letters..."
+./indexer $dir$letters-0 $indexdir$indexletters-0
+./indexer $dir$letters-1 $indexdir$indexletters-1
+./indexer $dir$letters-2 $indexdir$indexletters-2
+./indexer $dir$letters-3 $indexdir$indexletters-3
 
-echo "Testing letters depth 1..."
-./indexer ../crawler/test/letters/letters-1 testfile1
+echo "Testing toscrape..."
+./indexer $dir$toscrape-0 $indexdir$indextoscrape-0
+./indexer $dir$toscrape-0 $indexdir$indextoscrape-0
 
-echo "Testing letters depth 2..."
-./indexer ../crawler/test/letters/letters-2 testfile2
+echo "Testing wiki..."
+./indexer $dir$wiki-0 $indexdir$indexwiki-0
+./indexer $dir$wiki-0 $indexdir$indexwiki-0
 
 ############### Indextest ##################
 
@@ -37,25 +66,44 @@ echo "Testing letters depth 2..."
 # Three args
 ./indextest onearg twoarg threearg
 
-echo "Testing indextest with depth 0..."
-./indextest testfile0 newfile0
+echo "Testing letters..."
+./indextest $indexdir$indexletters-0 $indexdir$copyletters-0
+./indextest $indexdir$indexletters-1 $indexdir$copyletters-1
+./indextest $indexdir$indexletters-2 $indexdir$copyletters-2
+./indextest $indexdir$indexletters-3 $indexdir$copyletters-3
 
-echo "Testing indextest with depth 1..."
-./indextest testfile1 newfile1
+echo "Testing toscrape..."
+./indextest $indexdir$indextoscrape-0 $indexdir$copytoscrape-0
+./indextest $indexdir$indextoscrape-1 $indexdir$copytoscrape-1
 
-echo "Testing indextest with depth 2..."
-./indextest testfile2 newfile2
-
+echo "Testing wiki..."
+./indextest $indexdir$indexwiki-0 $indexdir$copywiki-0
+./indextest $indexdir$indexwiki-1 $indexdir$copywiki-2
 ############### Comparison ##################
 
 echo "Comparing files..."
-d=$(diff <(sort testfile0) <(sort newfile0))
-echo "Diff 0 is $d"
-d=$(diff <(sort testfile1) <(sort newfile1))
-echo "Diff 1 is $d"
-d=$(diff <(sort testfile2) <(sort newfile2))
-echo "Diff 2 is $d"
+a=$(diff <(sort $indexdir$indexletters-0) <(sort $indexdir$copyletters-0))
+b=$(diff <(sort $indexdir$indexletters-1) <(sort $indexdir$copyletters-1))
+c=$(diff <(sort $indexdir$indexletters-2) <(sort $indexdir$copyletters-2))
+d=$(diff <(sort $indexdir$indexletters-3) <(sort $indexdir$copyletters-3))
 
-# sort and diff
-# diff <(sort ${data}/testfile2) <(sort ${data}/newfile2)
-# or test and testcopy
+if [[ $a == "" && $b == "" && $c == "" && $d == "" ]]; then
+    echo "letters test successful!"
+fi
+
+a=$(diff <(sort $indexdir$indextoscrape-0) <(sort $indexdir$copytoscrape-0))
+b=$(diff <(sort $indexdir$indextoscrape-1) <(sort $indexdir$copytoscrape-1))
+
+
+if [[ $a == "" && $b == "" ]]
+then
+    echo "toscrape test successful!"
+fi
+
+a=$(diff <(sort $indexdir$indexwiki-0) <(sort $indexdir$copywiki-0))
+b=$(diff <(sort $indexdir$indexwiki-1) <(sort $indexdir$copywiki-1))
+
+if [[ $a == "" && $b == "" ]]
+then
+    echo "wiki test successful!"
+fi
