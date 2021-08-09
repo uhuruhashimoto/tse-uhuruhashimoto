@@ -130,3 +130,15 @@ bool isCrawlerDirectory(char *dirname) {
         return true;
     }
 }
+
+//Lab 5 - simple file check
+bool isReadableFile(char *filename) {
+    FILE *fp = NULL;
+    if ((fp = fopen(filename, "r")) == NULL) {
+        return false;
+    }
+    else {
+        fclose(fp);
+        return true;
+    }
+}
