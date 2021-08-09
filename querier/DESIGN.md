@@ -58,4 +58,9 @@ search_query() (single query searcher)
 - print_query(result)
 
 
+RANK QUERY LOGIC
+
+This will use the outlined system, with a two-counter structure to hold both the result (malloc'ed and added to), and the comparison counter (part of index; not modified during copy process).
+
+
 
