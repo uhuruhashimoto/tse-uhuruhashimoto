@@ -3,15 +3,15 @@ CC = gcc
 LIBDIR = ../libcs50
 COMDIR =../common
 
-querier: querier.o ../libcs50/libcs50.a ../common/common.a
-	$(CC) $(FLAGS) -o $@ querier.c ../libcs50/libcs50.a ../common/common.a
+querier: querier.o ../common/common.a ../libcs50/libcs50.a
+	$(CC) $(FLAGS) -o querier querier.c ../common/common.a ../libcs50/libcs50.a
 	
 # library dependencies
 ../libcs50/libcs50.a: 
-	$(MAKE) -C $(LIBDIR)
+	make -C $(LIBDIR)
 
 ../common/common.a:
-	$(MAKE) -C $(COMDIR)
+	make -C $(COMDIR)
 
 clean: 
 	rm *.o
