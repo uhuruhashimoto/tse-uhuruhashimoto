@@ -16,6 +16,7 @@ void pagesaver(webpage_t *webpage, int depth, char *dirname, int doc_id);
 char *filenameCreator(char *dirname, char *filename);
 char *intToString(int num);
 int stringToInt(char *string);
+bool isReadableFile(char *filename);
 
 // opens a file "crawler" in the specified directory 
 // to check its existence and write permissions
@@ -137,8 +138,6 @@ bool isReadableFile(char *filename) {
     if ((fp = fopen(filename, "r")) == NULL) {
         return false;
     }
-    else {
-        fclose(fp);
-        return true;
-    }
+    fclose(fp);
+    return true;
 }

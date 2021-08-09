@@ -56,4 +56,4 @@ bool isCrawlerDirectory(char *dirname);
 * check if a specified file exists by opening a file with read permissions
 * closes file after opening
 */
-bool isReadableFile(char *filename)
+bool isReadableFile(char *filename);
