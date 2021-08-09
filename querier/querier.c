@@ -42,5 +42,9 @@ int main(const int argc, char **argv) {
         return ++status;
     }
 
+    //load index
+
+    //query user
+
     return status;
 }
