@@ -17,6 +17,7 @@ char *filenameCreator(char *dirname, char *filename);
 char *intToString(int num);
 int stringToInt(char *string);
 bool isReadableFile(char *filename);
+bool isCrawlerDirectory(char *dirname);
 
 // opens a file "crawler" in the specified directory 
 // to check its existence and write permissions
