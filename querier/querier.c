@@ -102,27 +102,23 @@ bool hasSyntaxErrors(char *query) {
         fprintf(stderr, "Error: query must consist solely of alphabetic characters\n");
         return true;
     }
-    // query begins with "and" or "or" (already normalized)
-    if (beginsWith(query, "and") || beginsWith(query, " and")) {
-        fprintf(stderr, "Error: query may not begin with an \"and\" operator\n");
+    // query contains operator errors
+    if (!hasGoodOperators(query)) { //error printing handled by function
         return true;
     }
-    if (beginsWith(query, "or") || beginsWith(query, " or")) {
-        fprintf(stderr, "Error: query may not begin with an \"or\" operator\n");
-        return true;
-    }
-    
-    // query ends with "and" or "or"
-    if (endsWith(query, "and") || endsWith(query, "and ")) {
-        fprintf(stderr, "Error: query may not end with an \"and\" operator\n");
-        return true;
-    }
-    if (endsWith(query, "or") || endsWith(query, "or ")) {
-        fprintf(stderr, "Error: query may not end with an \"or\" operator\n");
-        return true;
-    }
-
     return false;
+}
+
+bool hasGoodOperators(char *line) {
+    //use freadwordp
+    //begins with and 
+    //begins with or
+
+    //has double and, double or, or combo
+
+    //ends with and
+    //ends with or
+    return true;
 }
 
 // helper: checks character by character to see if query begins with prefix
