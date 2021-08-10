@@ -103,7 +103,6 @@ bool hasSyntaxErrors(char *query) {
         fprintf(stderr, "Error: query must consist solely of alphabetic characters\n");
         return true;
     }
-
     // query begins with "and" or "or" (already normalized)
      if (beginsWith(query, "and") || beginsWith(query, " and")) {
          fprintf(stderr, "Error: query may not begin with an \"and\" operator\n");
