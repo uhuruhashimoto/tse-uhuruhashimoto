@@ -21,6 +21,12 @@
 #include "../common/index.h"
 #include "../common/word.h"
 
+/**************** FUNCTION DECLARATIONS ***********************/
+int query_user(index_t *index, char *dirname);
+
+/*************** STATIC/LOCAL FUNCTIONS ***********************/
+
+
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
     int status = 0;
@@ -43,8 +49,25 @@ int main(const int argc, char **argv) {
     }
 
     //load index
+    index_t *index = index_load(argv[2]);
+    if (index == NULL) {
+        fprintf(stderr, "Error: unable to load index\n");
+        return ++status;
+    }
 
     //query user
+    status += query_user(index, argv[1]);
 
+    //clean and exit
+    free(index);
     return status;
+}
+
+int query_user(index_t *index, char *dirname) {
+    int ret = 0;
+
+    //query user
+    //use readlinep
+
+    return ret;
 }
