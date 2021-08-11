@@ -30,10 +30,12 @@ bool beginsWith(char *line, char *prefix);
 bool endsWith(char *line, char *suffix);
 bool hasNoDoubleOperators(char *line);
 bool isAlphabet(char *line);
-void search_query(char *line);
+void run_query(char **words, int nwords, index_t *index, char *pageDirectory);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
-
+static void printSeparator();
+static char **get_words(char *line);
+static void free_words(char **words);
 
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
@@ -67,7 +69,7 @@ int main(const int argc, char **argv) {
     status += query_user(index, argv[1]);
 
     //clean and exit
-    free(index);
+    index_delete(index, counters_delete);
     return status;
 }
 
@@ -78,8 +80,13 @@ int query_user(index_t *index, char *dirname) {
     // query user
     while ((line = freadlinep(stdin)) != NULL) { // read lines until EOF reached
         if (!hasSyntaxErrors(line) && strlen(line) > 0) {
-            fprintf(stdout, "%s\n", line);
-            search_query(line);
+            fprintf(stdout, "Query: %s\n", line);
+            char **words = get_words(line);
+            if (size(words) > 0) {
+                run_query(words, size(words), index, dirname);
+            }
+            printSeparator();
+            free_words(words);
             free(line);
         }
         else { // normalization error (handled below) or empty query
@@ -88,6 +95,23 @@ int query_user(index_t *index, char *dirname) {
         }
     }
     return ret;
+}
+
+static char **get_words(char *line) {
+
+}
+
+static void free_words(char **words) {
+    for (int i = 0; i < size(words); i++) {
+        if (words[i] != NULL) free (words[i]);
+    }
+    free(words);
+}
+
+static void printSeparator() {
+    for (int i = 0; i<38; i++) {
+        fprintf(stdout, "-");
+    }
 }
 
 // query helper: checks for syntax errors and prints a specific error for each case
@@ -129,27 +153,7 @@ bool hasSyntaxErrors(char *query) {
 }
 
 bool hasNoDoubleOperators(char *line) {
-    //use freadwordp
-    char *word = NULL;
-    char *lastword = NULL;
-    while ((word = freadwordp(line)) != NULL) {
-        //if operator encountered
-        if (word == "and" || word == "or") {
-            //check if it's a double
-            if (lastword == "and" || lastword == "or") {
-                fprintf(stderr, "Error: operators must be nonconsecutive\n");
-                return false;
-            }
-            //if not, store operator information
-            if (lastword != NULL) free(lastword);
-            lastword = malloc(strlen(word)*sizeof(char));
-            strcpy(word, lastword);
-        }
-
-        free(word);
-    }
-    free(lastword);
-    
+    //TODO: error check without freadwordp
     return true;
 }
 
@@ -189,6 +193,7 @@ bool isAlphabet(char *line) {
     return true;
 }
 
-void search_query(char *line) {
+//runs a query (assumes all error checking has occurred prior to search)
+void run_query(char **words, int nwords, index_t *index, char *pageDirectory) {
     fprintf(stdout, "Searching query...\n");
 }
