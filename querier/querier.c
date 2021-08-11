@@ -97,8 +97,11 @@ int query_user(index_t *index, char *dirname) {
     return ret;
 }
 
+//allocates buffer to hold words for for query
 static char **get_words(char *line) {
-
+    char **words = NULL;
+    
+    return words;
 }
 
 static void free_words(char **words) {
@@ -194,6 +197,29 @@ bool isAlphabet(char *line) {
 }
 
 //runs a query (assumes all error checking has occurred prior to search)
-void run_query(char **words, int nwords, index_t *index, char *pageDirectory) {
-    fprintf(stdout, "Searching query...\n");
+counters_t *run_query(char **words, int nwords, index_t *index, char *pageDirectory) {
+    //declare struct two
+
+    for (int i = 0; i < nwords; i++) {
+        //counter is index_find words
+        //deal with ands and ors: call specific iterators here
+        //pass in two
+    }
+
+    //return two->answers; (all else will be freed with the index_delete call)
+    return NULL; //placeholder
+    //TODO: or print query here, using dirname for each counter
+}
+
+static void and_iterator(counters_t *ctr1, struct two) {
+    //take the two counters, ctr1 and two->ctr2 (both for same word)
+    //compare doc_ids and take the minimum score (num)
+    //copy the resulting counters_t entry into two->answers
+}
+
+static void or_iterator(counters_t *ctr1, struct two) {
+    //TODO: understand this
+    // compare ctr1 and two->ctr2
+    //do whatever the doc says to the score
+    //copy resulting counter into two->answers
 }
