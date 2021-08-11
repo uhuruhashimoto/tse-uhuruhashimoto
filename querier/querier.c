@@ -1,5 +1,4 @@
-/*
-* querier - asks user for input and displays ranked results from index
+/*/* querier - asks user for input and displays ranked results from index
 *
 * Uhuru Hashimoto CS50 21X
 */
@@ -22,20 +21,18 @@
 #include "../common/pagedir.h"
 #include "../common/index.h"
 #include "../common/word.h"
+#define MAX_LINES 100;
+#define MAX_WORDS 50;
+
+typedef struct twoctr {
+    counters_t *ctr1;
+    counters_t *result;
+} twoctr_t;
 
 /**************** FUNCTION DECLARATIONS ***********************/
-int query_user(index_t *index, char *dirname);
-bool hasSyntaxErrors(char *query);
-bool beginsWith(char *line, char *prefix);
-bool endsWith(char *line, char *suffix);
-bool hasNoDoubleOperators(char *line);
-bool isAlphabet(char *line);
-void run_query(char **words, int nwords, index_t *index, char *pageDirectory);
+void query_user(index_t *index, char *dirname);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
-static void printSeparator();
-static char **get_words(char *line);
-static void free_words(char **words);
 
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
@@ -66,42 +63,38 @@ int main(const int argc, char **argv) {
     }
 
     //query user
-    status += query_user(index, argv[1]);
+    query_user(index, argv[1]);
 
     //clean and exit
     index_delete(index, counters_delete);
     return status;
 }
 
-int query_user(index_t *index, char *dirname) {
-    int ret = 0;
-    char *line = NULL;
+//queries user
+void query_user(index_t *index, char *dirname) {
+    char **lines = malloc(sizeof(char)*MAX_QUERIES);
+    char *line;
+    char **words;
+    int i = 0;
+    int actual_query_num;
 
-    // query user
-    while ((line = freadlinep(stdin)) != NULL) { // read lines until EOF reached
-        if (!hasSyntaxErrors(line) && strlen(line) > 0) {
-            fprintf(stdout, "Query: %s\n", line);
-            char **words = get_words(line);
-            if (size(words) > 0) {
-                run_query(words, size(words), index, dirname);
-            }
-            printSeparator();
-            free_words(words);
-            free(line);
-        }
-        else { // normalization error (handled below) or empty query
-            free(line);
-            return ++ret;
-        }
+    //read each line
+    while ((line = freadlinep(stdin)) != NULL) {
+        lines[i] = line;
+        i++;
     }
-    return ret;
-}
+    //at end of loop, actual line number has been found
+    actual_query_num = i;
 
-//allocates buffer to hold words for for query
-static char **get_words(char *line) {
-    char **words = NULL;
-    
-    return words;
+    //perform each query
+    for (int j = 0; i < actual_query_num; j++) {  // read until end of inputs
+        if ((words = get_words(lines[i])) != NULL) {
+            printQuery(words);
+            run_query(words, size(words), index, dirname);
+            printSeparator();
+            free_words(words); //this frees words and the prev freadlinep command
+        } //else query could not be run; error checking handled in get_words
+    }
 }
 
 static void free_words(char **words) {
@@ -111,115 +104,114 @@ static void free_words(char **words) {
     free(words);
 }
 
+static void printQuery(char **words) {
+    fprintf(stdout, "Query: ");
+    for (int i = 0; i < size(words); i++) {
+        fprintf(stdout, "%s ", words[i]);
+    }
+    fprintf(stdout, "\n");
+}
+
 static void printSeparator() {
     for (int i = 0; i<38; i++) {
         fprintf(stdout, "-");
     }
 }
 
-// query helper: checks for syntax errors and prints a specific error for each case
-bool hasSyntaxErrors(char *query) {
-    // Error cases: 
-    // normalization fails
-    if (!NormalizeWord(query)) {
-        fprintf(stderr, "Error: failed to normalize query\n");
-        return true;
-    }
-    // non-alphabetic character encountered
-    if (!isAlphabet(query)) {
-        fprintf(stderr, "Error: query must consist solely of alphabetic characters\n");
-        return true;
-    }
-    // query begins with "and" or "or" (already normalized)
-     if (beginsWith(query, "and") || beginsWith(query, " and")) {
-         fprintf(stderr, "Error: query may not begin with an \"and\" operator\n");
-         return true;
-     }
-     if (beginsWith(query, "or") || beginsWith(query, " or")) {
-         fprintf(stderr, "Error: query may not begin with an \"or\" operator\n");
-         return true;
-     }
-     // query ends with "and" or "or"
-     if (endsWith(query, "and") || endsWith(query, "and ")) {
-         fprintf(stderr, "Error: query may not end with an \"and\" operator\n");
-         return true;
-     }
-     if (endsWith(query, "or") || endsWith(query, "or ")) {
-         fprintf(stderr, "Error: query may not end with an \"or\" operator\n");
-         return true;
-     }
-    // query contains operator errors
-    if (!hasNoDoubleOperators(query)) { //error printing handled by function
-        return true;
-    }
-    return false;
-}
+// turns each line into an array of words
+// uses provided allocation; no extra necessary
+// isalpha error checking and whitespace normalization included
+char **get_words(char *line) {
+    //initialize buffer
+    char **words;
+    char *wordstart;
+    char *rest;
+    int i = 0;
 
-bool hasNoDoubleOperators(char *line) {
-    //TODO: error check without freadwordp
-    return true;
-}
+    while (i <= size(line)) {
+        //slide word pointer
 
-// helper: checks character by character to see if query begins with prefix
-bool beginsWith(char *line, char *prefix) {
-    if (strlen(prefix) > strlen(line)) return false; //length check 
-    for (int i = 0; i < strlen(prefix); i++) {
-        if (line[i] != prefix[i]) {
-            return false;
-        }
-    }
-    return true;
-}
+        //slide rest pointer
+        //check if isalpha, isspace, and is \0 (end of line)
 
-// helper: checks character by character to see if query ends with prefix
-bool endsWith(char *line, char *suffix) {
-    if (strlen(suffix) > strlen(line)) return false; //length check
-    for (int i = 0; i < strlen(suffix); i++) {
-        int line_index = strlen(line) - i;
-        int suff_index = strlen(suffix) - i;
-        if (line[line_index] != suffix[suff_index]) {
-            return false;
-        }
+        //move word to rest+1 position
     }
-    return true;
-}
 
-// helper: checks that query is made of alphabetic characters and spaces
-bool isAlphabet(char *line) {
-    for (int i = 0; i < strlen(line); i++) {
-        if (!isalpha(line[i])) {
-            if (line[i] != ' ') {
-                return false;
-            }
-        }
-    }
-    return true;
+
 }
 
 //runs a query (assumes all error checking has occurred prior to search)
-counters_t *run_query(char **words, int nwords, index_t *index, char *pageDirectory) {
-    //declare struct two
+//memory allocation deals with result only; index remains unchanged
+counters_t *run_query(char **words, int nwords, index_t *index, char *dirname) {
+    counters_t *result = malloc(sizeof(counters_t*));
+    counters_t *first = index_find(words[0]);
+    struct twoctr two = {first, result};
 
     for (int i = 0; i < nwords; i++) {
-        //counter is index_find words
-        //deal with ands and ors: call specific iterators here
-        //pass in two
+        if (words[i] == "or") {
+            //reset two datatype; result becomes ctr1
+            two->ctr1 = result;
+            counters_delete(two->result);
+            two->result = malloc(sizeof(counters_t*));
+            //perform union
+            counters_iterate(index_get(words[i]), two, or_iterator);
+        }
+        else if (words[i] == "and") {
+            //ignore if word is "and"
+        }
+        else {
+            //reset two datatype; result becomes ctr1
+            two->ctr1 = result;
+            counters_delete(two->result);
+            two->result = malloc(sizeof(counters_t*));
+            //perform intersection
+            counters_iterate(index_get(words[i]), two, and_iterator);
+        }
     }
 
-    //return two->answers; (all else will be freed with the index_delete call)
-    return NULL; //placeholder
-    //TODO: or print query here, using dirname for each counter
+    display_result(two->result, dirname);
+    counters_delete(two->result);
 }
 
-static void and_iterator(counters_t *ctr1, struct two) {
-    //take the two counters, ctr1 and two->ctr2 (both for same word)
-    //compare doc_ids and take the minimum score (num)
-    //copy the resulting counters_t entry into two->answers
+
+void display_result(counters_t *answer, char *dirname) {
+    //count size of answer - count_iterator
+    int *size = malloc(sizeof(int));
+    counters_iterate(answer, count, count_iterator);
+
+    //create array of struct counters_t
+    //add to diff struct - sort_iterator
+
+
+    //get URLs
+    //print results 
 }
 
-static void or_iterator(counters_t *ctr1, struct two) {
-    //TODO: understand this
-    // compare ctr1 and two->ctr2
-    //do whatever the doc says to the score
-    //copy resulting counter into two->answers
+/**************** COUNTER ITERATORS ***********************/
+
+//intersection
+//takes intersection of two counters and puts in result counter
+static void and_iterator(void *arg, const int key, const int count) {
+
 }
+
+//union
+//takes union of two counters and puts in result counter
+static void or_iterator(void *arg, const int key, const int count) {
+
+}
+
+//counts items in counters_t and adds to *arg (*nitem, an int ptr)
+static void count_iterator(void *arg, const int key, const int count) {
+    int *nitems = arg;
+    if (arg != NULL && key != NULL && count != NULL) (*nitems)++;
+}
+
+//sorts counters and adds to an array of structs provided in *arg
+static void sort_iterator(void *arg, const int key, const int count) {
+
+}
+
+
+
+
