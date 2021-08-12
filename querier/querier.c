@@ -135,11 +135,12 @@ static void printSeparator() {
 }
 
 // turns each line into an array of words
-// uses provided allocation; no extra necessary
+// uses provided allocation; allocates buffer to hold them (not words themselves)
 // isalpha error checking and whitespace normalization included
 char **get_words(char *line) {
+    const int max_words_in_line = 81;
     //initialize buffer
-    char **words = NULL;
+    char **words = calloc(max_words_in_line, sizeof(char));
     //initialize pointers
     char *wordstart;
     char *rest;
@@ -179,20 +180,22 @@ char **get_words(char *line) {
                 i++;
             }
             else {
-                if (isspace(rest[0])) { //if space encountered, we've reached the end of a word
+                if (isspace(rest[0])) { //if space encountered, we've reached the end of a word (or line)
                     endofword = true;
-                    //replace with /0
-                    rest[0] = '\0';
-                    //put in array
-                    words[words_index] = wordstart;
-                    words_index++;
-                }
-                else if (rest[0] == '\n') {
-                    //reached end of line (already null-terminated)
-                    endofword = true;
-                    //put in array
-                    words[words_index] = wordstart;
-                    endofline = true; //exit loop
+                    if (rest[0] == '\n') { //reached end of line 
+                        //replace with /0
+                        rest[0] = '\0';
+                        //put in array
+                        words[words_index] = wordstart;
+                        endofline = true; //exit loop
+                    }
+                    else {
+                        //replace with /0
+                        rest[0] = '\0';
+                        //put in array
+                        words[words_index] = wordstart;
+                        words_index++;
+                    }
                 }
                 else {
                     //if non-alphabetic character encountered (ex ca!t), print error and exit
@@ -201,16 +204,19 @@ char **get_words(char *line) {
                 }
             }
         }
-        //move wordstart and rest to rest+1 position
-        i++;
-        rest = &line[i];
-        wordstart = &line[i];
-        //reset flags
-        wordstart = false;
-        endofword = false;
+        //move wordstart and rest to rest+1 position in preparation for loop
+        if (!endofline) {
+            i++;
+            rest = &line[i];
+            wordstart = &line[i];
+            //reset flags
+            startofword = false;
+            endofword = false;
+        }
     }
 
-    words = checkOperators(words); //returns null if operator error found; otherwise unchanged array
+    //TODO: 
+    //words = checkOperators(words); //returns null if operator error found; otherwise unchanged array
     return words;
 }
 
@@ -366,8 +372,7 @@ static void count_iterator(void *arg, const int key, const int count) {
 static void sort_iterator(void *arg, const int key, const int count) {
     //initialize struct (with doc_id and value)
     //TODO: struct ctrdata **sorted = arg;
-    
-    //TODO: this
+
     //add (key, count) pair to sorted array 
     //sort by count
 
@@ -378,24 +383,30 @@ static void sort_iterator(void *arg, const int key, const int count) {
 #ifdef UNITTEST
 static int unittest() {
     int ret = 0;
-    //test string breakdown
+    //-------------TEST 1: GET_WORDS----------------------//
     fprintf(stdout, "Testing get_words...\n");
+    //create test string
     char *line = calloc(20, sizeof(char));
-    line = "This is a dog\n";
-    line[4] = '\0'; //check
-    fprintf(stdout, "Testing with \"%s\"\n", line);
+    sprintf(line, "This is a  dog\n");
+    fprintf(stdout, "Testing with %s", line);
+    //break line into words
     char **words = get_words(line);
-    if (words == NULL) {
-        fprintf(stderr, "Error: words returned null pointer\n");
-        ret++;
+    if (words == NULL) { 
+        ret++; //syntax errors
     }
-    for (int i = 0; i < sizeof(words); i++) {
-        fprintf(stdout, "%s ", words[i]);
+    else {
+        //print query
+        fprintf(stdout, "Query: ");
+        for (int i = 0; i < 4; i++) {
+            fprintf(stdout, "%s ", words[i]);
+        }
+        fprintf(stdout, "\n");
     }
+    //free pointers
     free(line);
-    free_words(words);
+    free(words);
 
-    //test sorting
+    //-------------TEST 1: SORT----------------------//
 
     return ret;
 }
