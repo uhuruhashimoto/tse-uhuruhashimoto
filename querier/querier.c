@@ -44,7 +44,7 @@ void display_result(counters_t *answer, char *dirname);
 static void free_words(char **words);
 static void printQuery(char **words);
 static void printSeparator();
-static char ** checkOperators(char **words);
+static char ** checkOperators(char **words, int nwords);
 static char* getURL(int doc_id, char *dirname);
 //iterators
 static void and_iterator(void *arg, const int key, const int count1);
@@ -182,7 +182,7 @@ char **get_words(char *line) {
             else {
                 if (isspace(rest[0])) { //if space encountered, we've reached the end of a word (or line)
                     endofword = true;
-                    if (rest[0] == '\n') { //reached end of line 
+                    if (rest[0] == '\n') { //reached end of line (in case lines contain \n)
                         //replace with /0
                         rest[0] = '\0';
                         //put in array
@@ -196,6 +196,12 @@ char **get_words(char *line) {
                         words[words_index] = wordstart;
                         words_index++;
                     }
+                }
+                else if (rest[0] == '\0') { //end of line
+                    //put in array
+                    words[words_index] = wordstart;
+                    endofword = true;
+                    endofline = true; //exit loop
                 }
                 else {
                     //if non-alphabetic character encountered (ex ca!t), print error and exit
@@ -215,8 +221,7 @@ char **get_words(char *line) {
         }
     }
 
-    //TODO: 
-    //words = checkOperators(words); //returns null if operator error found; otherwise unchanged array
+    words = checkOperators(words, words_index); //returns null if operator error found; otherwise unchanged array
     return words;
 }
 
@@ -278,7 +283,7 @@ void display_result(counters_t *answer, char *dirname) {
 //checks for starting "and" and "or" or double operators; 
 //returns null if found
 //otherwise, returns string array unchanged
-static char ** checkOperators(char **words) {
+static char ** checkOperators(char **words, int nwords) {
     char *last = NULL;
     //check for starting or ending operators
     if ((strcmp(words[0], "and")) == 0) {
@@ -289,16 +294,16 @@ static char ** checkOperators(char **words) {
         fprintf(stderr, "Error: query may not begin with \"or\"\n");
         return NULL;
     }
-    else if ((strcmp(words[sizeof(words)-1], "and")) == 0) {
+    else if ((strcmp(words[nwords], "and")) == 0) {
         fprintf(stderr, "Error: query may not end with \"and\"\n");
         return NULL;
     }
-    else if ((strcmp(words[sizeof(words)-1], "or")) == 0) {
+    else if ((strcmp(words[nwords], "or")) == 0) {
         fprintf(stderr, "Error: query may not end with \"or\"\n");
         return NULL;
     }
     //check for double operators
-    for (int i = 0; i < sizeof(words); i++) {
+    for (int i = 0; i < nwords; i++) {
         if ((strcmp(words[i], "and") == 0) || (strcmp(words[i], "or") == 0)) {
             if ((strcmp(last, "and") == 0) || (strcmp(last, "or") == 0)) {
                 fprintf(stderr, "Error: query may not contain double operators\n");
@@ -385,10 +390,9 @@ static int unittest() {
     int ret = 0;
     //-------------TEST 1: GET_WORDS----------------------//
     fprintf(stdout, "Testing get_words...\n");
-    //create test string
-    char *line = calloc(20, sizeof(char));
-    sprintf(line, "This is a  dog\n");
-    fprintf(stdout, "Testing with %s", line);
+    //create test string (can also use sprintf)
+    char *line = freadlinep(stdin); 
+    fprintf(stdout, "Testing with %s\n", line);
     //break line into words
     char **words = get_words(line);
     if (words == NULL) { 
@@ -397,7 +401,7 @@ static int unittest() {
     else {
         //print query
         fprintf(stdout, "Query: ");
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             fprintf(stdout, "%s ", words[i]);
         }
         fprintf(stdout, "\n");
