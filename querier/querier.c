@@ -42,7 +42,7 @@ void display_result(counters_t *answer, char *dirname);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
 static void free_words(char **words);
-static void printQuery(char **words);
+static void printQuery(char **words, int nwords);
 static void printSeparator();
 static char ** checkOperators(char **words, int nwords);
 static char* getURL(int doc_id, char *dirname);
@@ -105,7 +105,6 @@ void query_user(index_t *index, char *dirname) {
     while ((line = freadlinep(stdin)) != NULL) {
         //perform each query
         if ((words = get_words(line)) != NULL) {
-            printQuery(words);
             run_query(words, sizeof(words), index, dirname);
             printSeparator();
             free_words(words); //this frees words and the prev freadlinep command
@@ -120,9 +119,9 @@ static void free_words(char **words) {
     free(words);
 }
 
-static void printQuery(char **words) {
+static void printQuery(char **words, int nwords) {
     fprintf(stdout, "Query: ");
-    for (int i = 0; i < sizeof(words); i++) {
+    for (int i = 0; i < nwords+1; i++) {
         fprintf(stdout, "%s ", words[i]);
     }
     fprintf(stdout, "\n");
@@ -221,7 +220,9 @@ char **get_words(char *line) {
         }
     }
 
+    //TODO: normalize query 
     words = checkOperators(words, words_index); //returns null if operator error found; otherwise unchanged array
+    printQuery(words, words_index);
     return words;
 }
 
@@ -398,14 +399,7 @@ static int unittest() {
     if (words == NULL) { 
         ret++; //syntax errors
     }
-    else {
-        //print query
-        fprintf(stdout, "Query: ");
-        for (int i = 0; i < 5; i++) {
-            fprintf(stdout, "%s ", words[i]);
-        }
-        fprintf(stdout, "\n");
-    }
+    
     //free pointers
     free(line);
     free(words);
