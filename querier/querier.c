@@ -36,8 +36,21 @@ typedef struct ctrdata {
 
 /**************** FUNCTION DECLARATIONS ***********************/
 void query_user(index_t *index, char *dirname);
+char **get_words(char *line);
+void run_query(char **words, int nwords, index_t *index, char *dirname);
+void display_result(counters_t *answer, char *dirname);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
+static void free_words(char **words);
+static void printQuery(char **words);
+static void printSeparator();
+static char ** checkOperators(char **words);
+static char* getURL(int doc_id, char *dirname);
+//iterators
+static void and_iterator(void *arg, const int key, const int count1);
+static void or_iterator(void *arg, const int key, const int count);
+static void count_iterator(void *arg, const int key, const int count);
+static void sort_iterator(void *arg, const int key, const int count);
 
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
@@ -77,18 +90,14 @@ int main(const int argc, char **argv) {
 
 //queries user
 void query_user(index_t *index, char *dirname) {
-    char **lines = malloc(sizeof(char)*MAX_LINES);
     char *line;
     char **words;
-    int i = 0;
-    int actual_query_num;
-
     //read each line
     while ((line = freadlinep(stdin)) != NULL) {
         //perform each query
-        if ((words = get_words(lines[i])) != NULL) {
+        if ((words = get_words(line)) != NULL) {
             printQuery(words);
-            run_query(words, size(words), index, dirname);
+            run_query(words, sizeof(words), index, dirname);
             printSeparator();
             free_words(words); //this frees words and the prev freadlinep command
         } //else query could not be run or is empty; error checking handled in get_words
@@ -96,7 +105,7 @@ void query_user(index_t *index, char *dirname) {
 }
 
 static void free_words(char **words) {
-    for (int i = 0; i < size(words); i++) {
+    for (int i = 0; i < sizeof(words); i++) {
         if (words[i] != NULL) free (words[i]);
     }
     free(words);
@@ -104,7 +113,7 @@ static void free_words(char **words) {
 
 static void printQuery(char **words) {
     fprintf(stdout, "Query: ");
-    for (int i = 0; i < size(words); i++) {
+    for (int i = 0; i < sizeof(words); i++) {
         fprintf(stdout, "%s ", words[i]);
     }
     fprintf(stdout, "\n");
@@ -130,10 +139,10 @@ char **get_words(char *line) {
     bool startofword = false;
     bool endofword = false;
 
-    while (i <= size(line)) {
+    while (i <= sizeof(line)) { //stop only after null terminator
         //slide word pointer
         while (!startofword) {
-            wordstart = line[i];
+            wordstart = &line[i];
             if (isalpha(wordstart[0])) { 
                 startofword = true;
             }
@@ -155,7 +164,7 @@ char **get_words(char *line) {
         }
         //slide rest pointer
         while (!endofword) {
-            rest = line[i];
+            rest = &line[i];
             if (isalpha(rest[0])) {
                 i++;
             }
@@ -166,12 +175,14 @@ char **get_words(char *line) {
                     rest[0] = '\0';
                     //put in array
                     words[words_index] = wordstart;
+                    words_index++;
                 }
                 else if (rest[0] == '\0') {
                     //reached end of line (already null-terminated)
                     endofword = true;
                     //put in array
                     words[words_index] = wordstart;
+                    words_index++;
                 }
                 else {
                     //if non-alphabetic character encountered (ex ca!t), print error and exit
@@ -182,34 +193,36 @@ char **get_words(char *line) {
         }
         //move wordstart and rest to rest+1 position
         i++;
-        rest = words[i];
-        wordstart = words[i];
+        rest = &line[i];
+        wordstart = &line[i];
         //reset flags
         wordstart = false;
         endofword = false;
     }
 
-    words = checkSeparators(words); //returns null if operator error found; otherwise unchanged array
+    words = checkOperators(words); //returns null if operator error found; otherwise unchanged array
     return words;
 }
 
 //runs a query (assumes all error checking has occurred prior to search)
 //memory allocation deals with result only; index remains unchanged
-counters_t *run_query(char **words, int nwords, index_t *index, char *dirname) {
+void run_query(char **words, int nwords, index_t *index, char *dirname) {
     counters_t *result = malloc(sizeof(counters_t*));
-    counters_t *ctr1 = index_find(words[0]);
-    struct twoctr two = {ctr1, result};
+    counters_t *ctr1 = index_find(index, words[0]);
+    struct twoctr *two = malloc(sizeof(struct twoctr *));
+    two->first = ctr1;
+    two->result = result;
     //loop through words and respond as per operators
     for (int i = 0; i < nwords; i++) {
-        if (words[i] == "or") {
+        if ((strcmp(words[i], "or")) == 0) {
             //reset two datatype; result becomes ctr1
             two->first = result;
             counters_delete(two->result);
             two->result = malloc(sizeof(counters_t*));
             //perform union
-            counters_iterate(index_get(words[i]), two, or_iterator);
+            counters_iterate(index_find(index, words[i]), two, or_iterator);
         }
-        else if (words[i] == "and") {
+        else if ((strcmp(words[i], "and")) == 0) {
             //ignore if word is "and"
         }
         else {
@@ -218,7 +231,7 @@ counters_t *run_query(char **words, int nwords, index_t *index, char *dirname) {
             counters_delete(two->result);
             two->result = malloc(sizeof(counters_t*));
             //perform intersection
-            counters_iterate(index_get(words[i]), two, and_iterator);
+            counters_iterate(index_find(index, words[i]), two, and_iterator);
         }
     }
     display_result(two->result, dirname);
@@ -232,14 +245,14 @@ void display_result(counters_t *answer, char *dirname) {
     counters_iterate(answer, size, count_iterator);
 
     //create array of structs to store ctr data
-    struct ctrdata **sorted = calloc(sizeof(struct ctrdata *)*size);
+    struct ctrdata **sorted = calloc(*size, sizeof(struct ctrdata *));
     //add to diff struct - sort_iterator
     counters_iterate(answer, sorted, sort_iterator);
 
     //get URLs and print results 
-    for (int i = 0; i < size; i++) {
-        char *url = getURL(sorted->doc_id, dirname);
-        fprintf("Doc:   %d  Score   %d  Url: %s\n", sorted->doc_id, sorted->value, url);
+    for (int i = 0; i < *size; i++) {
+        char *url = getURL(sorted[i]->doc_id, dirname);
+        fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted[i]->doc_id, sorted[i]->value, url);
         free(url);
     }
     //clean up
@@ -252,26 +265,26 @@ void display_result(counters_t *answer, char *dirname) {
 static char ** checkOperators(char **words) {
     char *last = NULL;
     //check for starting or ending operators
-    if (words[0] == "and") {
+    if ((strcmp(words[0], "and")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"and\"\n");
         return NULL;
     }
-    else if (words[0] == "or") {
+    else if ((strcmp(words[0], "or")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"or\"\n");
         return NULL;
     }
-    else if (words[size(words)] == "and") {
+    else if ((strcmp(words[sizeof(words)-1], "and")) == 0) {
         fprintf(stderr, "Error: query may not end with \"and\"\n");
         return NULL;
     }
-    else if (words[size(words)] == "or") {
+    else if ((strcmp(words[sizeof(words)-1], "or")) == 0) {
         fprintf(stderr, "Error: query may not end with \"or\"\n");
         return NULL;
     }
     //check for double operators
-    for (int i = 0; i < size(words); i++) {
-        if (words[i] == "and" || words[i] == "or") {
-            if (last == "and" || last == "or") {
+    for (int i = 0; i < sizeof(words); i++) {
+        if ((strcmp(words[i], "and") == 0) || (strcmp(words[i], "or") == 0)) {
+            if ((strcmp(last, "and") == 0) || (strcmp(last, "or") == 0)) {
                 fprintf(stderr, "Error: query may not contain double operators\n");
                 return NULL;
             }
@@ -283,17 +296,19 @@ static char ** checkOperators(char **words) {
 
 // allocates string to give url (first line of dirname/doc_id)
 // returns allocated string (left to user to free)
-static void getURL(int doc_id, dirname) {
+static char* getURL(int doc_id, char *dirname) {
     FILE *fp = NULL;
-    char *doc = stringToInt(doc_id);
+    char *doc = intToString(doc_id);
     char *filename = filenameCreator(dirname, doc);
+    char *ret = NULL;
+    const char *message = "No Url Available"; //failure message for url
 
     if ((fp = fopen(filename, "r")) != NULL) {
-        char *ret = freadlinep(fp);
+        ret = freadlinep(fp);
     }
     else {
-        char *ret = malloc(sizeof(char)*20);
-        ret = "No Url Available";
+        ret = malloc(sizeof(char)*sizeof(message)); //allocate string to be freed later
+        strcpy(ret, message);
     }
     free(filename);
     free(doc);
@@ -305,14 +320,14 @@ static void getURL(int doc_id, dirname) {
 //intersection
 //takes intersection of two counters and puts in result counter
 static void and_iterator(void *arg, const int key, const int count1) {
-    struct twoctr two  = arg;
+    struct twoctr *two  = arg;
     int count2 = 0; 
     if ((count2 = counters_get(two->first, key)) != 0) { //if key is in both counters
         if (count2 > count1) {
-            counters_set(two->answer, key, count1); //set answer with minimum value
+            counters_set(two->result, key, count1); //set answer with minimum value
         }
         else {
-            counters_set(two->answer, key, count2);
+            counters_set(two->result, key, count2);
         }
     }
 
@@ -321,26 +336,28 @@ static void and_iterator(void *arg, const int key, const int count1) {
 //union
 //takes union of two counters and puts in result counter
 static void or_iterator(void *arg, const int key, const int count) {
-    struct twoctr two = arg;
+    struct twoctr *two = arg;
     int count2 = 0;
     if ((count2 = counters_get(two->first, key)) != 0) { //if it's in both
-        counters_set(two->answer, count2+count1); //set answer with the sum of both values
+        counters_set(two->result, key, count2 + count); //set answer with the sum of both values
     }
     else {
-        counters_set(two->answer, key, value); //else add it (it's in the union)
+        counters_set(two->result, key, count); //else add it (it's in the union)
     }
 }
 
 //counts items in counters_t and adds to *arg (*nitem, an int ptr)
 static void count_iterator(void *arg, const int key, const int count) {
     int *nitems = arg;
-    if (arg != NULL && key != NULL && count != NULL) (*nitems)++;
+    if (arg != NULL) (*nitems)++;
 }
 
 //sorts counters and adds to an array of structs provided in *arg
 static void sort_iterator(void *arg, const int key, const int count) {
     //initialize struct (with doc_id and value)
-    struct ctrdata **sorted = arg;
+    //TODO: struct ctrdata **sorted = arg;
+    
+    //TODO: this
     //add (key, count) pair to sorted array 
     //sort by count
 
