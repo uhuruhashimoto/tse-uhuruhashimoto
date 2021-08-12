@@ -51,11 +51,15 @@ static void and_iterator(void *arg, const int key, const int count1);
 static void or_iterator(void *arg, const int key, const int count);
 static void count_iterator(void *arg, const int key, const int count);
 static void sort_iterator(void *arg, const int key, const int count);
+//unit test
+#ifdef UNITTEST
+void unittest();
+#endif
 
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
     int status = 0;
-
+#ifndef UNITTEST
     //argument number check
     if (argc < 3 || argc > 3) {
         fprintf(stderr, "Error: wrong number of arguments.\n"
@@ -86,6 +90,11 @@ int main(const int argc, char **argv) {
     //clean and exit
     index_delete(index, counters_delete);
     return status;
+#endif
+#ifdef UNITTEST
+    unittest();
+    return status;
+#endif
 }
 
 //queries user
@@ -177,7 +186,7 @@ char **get_words(char *line) {
                     words[words_index] = wordstart;
                     words_index++;
                 }
-                else if (rest[0] == '\0') {
+                else if (rest[0] == '\n') {
                     //reached end of line (already null-terminated)
                     endofword = true;
                     //put in array
@@ -364,6 +373,22 @@ static void sort_iterator(void *arg, const int key, const int count) {
     //compare val to each (k,v) pair in sorted array
     //insert when val >= (v)
 }
+
+#ifdef UNITTEST
+static void unittest() {
+    //test string breakdown
+    fprintf(stdout, "Testing get_words...\n");
+    char *line = "This is a dog\n";
+    char **words = get_words(line);
+    for (int i = 0; i < size(words); i++) {
+        fprintf(stdout, "%s " words[i]);
+    }
+    free_words(words);
+
+    //test sorting
+    
+}
+#endif
 
 
 
