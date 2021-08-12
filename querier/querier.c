@@ -53,7 +53,7 @@ static void count_iterator(void *arg, const int key, const int count);
 static void sort_iterator(void *arg, const int key, const int count);
 //unit test
 #ifdef UNITTEST
-void unittest();
+static int unittest();
 #endif
 
 // driver; checks arguments and initiates loop
@@ -92,7 +92,7 @@ int main(const int argc, char **argv) {
     return status;
 #endif
 #ifdef UNITTEST
-    unittest();
+    status += unittest();
     return status;
 #endif
 }
@@ -147,8 +147,9 @@ char **get_words(char *line) {
     int words_index = 0;
     bool startofword = false;
     bool endofword = false;
+    bool endofline = false;
 
-    while (i <= sizeof(line)) { //stop only after null terminator
+    while (!endofline) { //stop only after null terminator
         //slide word pointer
         while (!startofword) {
             wordstart = &line[i];
@@ -191,7 +192,7 @@ char **get_words(char *line) {
                     endofword = true;
                     //put in array
                     words[words_index] = wordstart;
-                    words_index++;
+                    endofline = true; //exit loop
                 }
                 else {
                     //if non-alphabetic character encountered (ex ca!t), print error and exit
@@ -375,18 +376,28 @@ static void sort_iterator(void *arg, const int key, const int count) {
 }
 
 #ifdef UNITTEST
-static void unittest() {
+static int unittest() {
+    int ret = 0;
     //test string breakdown
     fprintf(stdout, "Testing get_words...\n");
-    char *line = "This is a dog\n";
+    char *line = calloc(20, sizeof(char));
+    line = "This is a dog\n";
+    line[4] = '\0'; //check
+    fprintf(stdout, "Testing with \"%s\"\n", line);
     char **words = get_words(line);
-    for (int i = 0; i < size(words); i++) {
-        fprintf(stdout, "%s " words[i]);
+    if (words == NULL) {
+        fprintf(stderr, "Error: words returned null pointer\n");
+        ret++;
     }
+    for (int i = 0; i < sizeof(words); i++) {
+        fprintf(stdout, "%s ", words[i]);
+    }
+    free(line);
     free_words(words);
 
     //test sorting
-    
+
+    return ret;
 }
 #endif
 
