@@ -51,6 +51,7 @@ static void and_iterator(void *arg, const int key, const int count1);
 static void or_iterator(void *arg, const int key, const int count);
 static void count_iterator(void *arg, const int key, const int count);
 static void sort_iterator(void *arg, const int key, const int count);
+static void nullifyWords(char **words, int progress);
 //unit test
 #ifdef UNITTEST
 static int unittest();
@@ -120,6 +121,7 @@ static void free_words(char **words) {
 }
 
 static void printQuery(char **words, int nwords) {
+    if (words == NULL) return;
     fprintf(stdout, "Query: ");
     for (int i = 0; i < nwords+1; i++) {
         fprintf(stdout, "%s ", words[i]);
@@ -163,11 +165,15 @@ char **get_words(char *line) {
                 }
                 else if (wordstart[0] == '\0') {
                     //empty string: return empty array
+                    nullifyWords(words, words_index);
+                    free(words);
                     return NULL;
                 }
                 else {
                     //if non-alphabetic character encountered (ex !cat), print error and exit
                     fprintf(stderr, "Error: query contains non-alphabetic character %c\n", wordstart[0]);
+                    nullifyWords(words, words_index);
+                    free(words);
                     return NULL;
                 }
             }
@@ -205,6 +211,8 @@ char **get_words(char *line) {
                 else {
                     //if non-alphabetic character encountered (ex ca!t), print error and exit
                     fprintf(stderr, "Error: query contains non-alphabetic character %c\n", rest[0]);
+                    nullifyWords(words, words_index);
+                    free(words);
                     return NULL;
                 }
             }
@@ -220,10 +228,16 @@ char **get_words(char *line) {
         }
     }
 
-    //TODO: normalize query 
     words = checkOperators(words, words_index); //returns null if operator error found; otherwise unchanged array
     printQuery(words, words_index);
     return words;
+}
+
+//clears words so no strings are freed twice
+static void nullifyWords(char **words, int progress) {
+    for (int i = 0; i < progress; i++) {
+        if (words[i] != NULL) words[i] = NULL;
+    }
 }
 
 //runs a query (assumes all error checking has occurred prior to search)
@@ -289,25 +303,35 @@ static char ** checkOperators(char **words, int nwords) {
     //check for starting or ending operators
     if ((strcmp(words[0], "and")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"and\"\n");
+        free(words);
         return NULL;
     }
     else if ((strcmp(words[0], "or")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"or\"\n");
+        free(words);
         return NULL;
     }
     else if ((strcmp(words[nwords], "and")) == 0) {
         fprintf(stderr, "Error: query may not end with \"and\"\n");
+        free(words);
         return NULL;
     }
     else if ((strcmp(words[nwords], "or")) == 0) {
         fprintf(stderr, "Error: query may not end with \"or\"\n");
+        free(words);
         return NULL;
     }
     //check for double operators
-    for (int i = 0; i < nwords; i++) {
+    for (int i = 0; i <= nwords; i++) {
+        if (!NormalizeWord(words[i])) {
+            fprintf(stderr, "Error: unable to normalize %s\n", words[i]);
+            free(words);
+            return NULL;
+            }
         if ((strcmp(words[i], "and") == 0) || (strcmp(words[i], "or") == 0)) {
             if ((strcmp(last, "and") == 0) || (strcmp(last, "or") == 0)) {
                 fprintf(stderr, "Error: query may not contain double operators\n");
+                free(words);
                 return NULL;
             }
         }
@@ -390,19 +414,33 @@ static void sort_iterator(void *arg, const int key, const int count) {
 static int unittest() {
     int ret = 0;
     //-------------TEST 1: GET_WORDS----------------------//
+    //create also read test string from stdin by uncommenting line below
+    //char *line = freadlinep(stdin);
+    //char **words = get_words(line);
+    //free(words);
     fprintf(stdout, "Testing get_words...\n");
-    //create test string (can also use sprintf)
-    char *line = freadlinep(stdin); 
-    fprintf(stdout, "Testing with %s\n", line);
+    char *line1 = calloc(30, sizeof(char));
+    char *line2 = calloc(30, sizeof(char));
+    char *line3 = calloc(30, sizeof(char));
+    char *line4 = calloc(30, sizeof(char));
+    sprintf(line1, "This is a normal string");
+    sprintf(line2, "THIS STRING IS CAPITALIZED");
+    sprintf(line3, "This str!ing h@s err0rs");
+    sprintf(line4, "This string has and or operator errors");
     //break line into words
-    char **words = get_words(line);
-    if (words == NULL) { 
-        ret++; //syntax errors
-    }
-    
+    fprintf(stdout, "Testing with \"%s\"\n", line1);
+    char **words1 = get_words(line1);
+    fprintf(stdout, "Testing with \"%s\"\n", line2);
+    char **words2 = get_words(line2);
+    fprintf(stdout, "Testing with \"%s\"\n", line3);
+    char **words3 = get_words(line3);
+    fprintf(stdout, "Testing with \"%s\"\n", line4);
+    char **words4 = get_words(line4);
+    if (words3 == NULL) {} //silence compiler error with null return
+
     //free pointers
-    free(line);
-    free(words);
+    free(line1); free(line2); free(line3); free(line4);
+    free(words1); free(words2); free(words4);
 
     //-------------TEST 1: SORT----------------------//
 
