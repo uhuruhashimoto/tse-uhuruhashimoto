@@ -310,50 +310,73 @@ static void nullifyWords(char **words, int progress) {
 //runs a query (assumes all error checking has occurred prior to search)
 //memory allocation deals with result only; index remains unchanged
 void run_query(char **words, int nwords, index_t *index, char *dirname) {
-    counters_t *sum = counters_new();
-    bool prod_is_empty = true; //sum is empty
+    //allocate holders for prod and result
     struct twoctr *prodholder = malloc(sizeof(struct twoctr *));
     struct twoctr *resultholder = malloc(sizeof(struct twoctr *));
+    bool prod_is_empty = false;
+
+    //fill holders with dummy counters
+    counters_t *prodfirst = counters_new();
+    counters_t *sumfirst = counters_new();
+    counters_t *prod = counters_new();
+    counters_t *sum = counters_new();
+    prodholder->first = prodfirst;
+    prodholder->result = prod;
+    resultholder->first = sumfirst;
     resultholder->result = sum;
 
     //for each word
     for (int i = 0; i<nwords; i++) {
         //OR
         if (strcmp(words[i], "or") == 0) { 
-            //iterate twice to find union
-            resultholder->first = prodholder->result;
+            //put res into first
+            counters_delete(resultholder->first);
+            resultholder->first = resultholder->result;
+            //allocate new result
+            counters_t *restemp = counters_new();
+            resultholder->result = restemp;
+            //perform union
             counters_iterate(index_find(index, words[i]), resultholder, union_iterator);
-            resultholder->first = index_find(index, words[i]);
-            counters_iterate(prodholder->result, resultholder, union_iterator);
-            //delete prod; clean up
+            //delete prod
+            counters_delete(prodholder->first);
             counters_delete(prodholder->result);
             prod_is_empty = true;
+
         }
         //AND
         else if (strcmp(words[i], "and") == 0) {} //just ignore it
         //ALL OTHER WORDS
         else { 
-            //if this is the first word after an or, set prod to it by default
             if (prod_is_empty) {
-                //place a new empty result counters in prod
-                counters_t *temp = counters_new();
-                prodholder->result = temp;
-                //put words[i] into that counters
+                counters_t *pfirst = counters_new();
+                counters_t *pres = counters_new();
+                prodholder->first = pfirst;
+                prodholder->result = pres;
+                //perform intersection
                 counters_iterate(index_find(index, words[i]), prodholder, union_iterator);
-                prod_is_empty = false;
             }
-            //if it's not the first word after an or, take the intersection
-            else  {
+            else {
+                //put res into first
+                counters_delete(prodholder->first);
                 prodholder->first = prodholder->result;
+                //allocate new result
+                counters_t *prodtemp = counters_new();
+                prodholder->result = prodtemp;
+                //perform intersection
                 counters_iterate(index_find(index, words[i]), prodholder, intersection_iterator);
+
             }
         }
     }
-    //At the end of the loop, take the union of sum and prod once again
-    counters_t *uniontemp = counters_new();
-    resultholder->first = uniontemp;
+
+    //After loop, one final union of prod and result
+    counters_delete(resultholder->first);
+    resultholder->first = resultholder->result;
+    //allocate new result
+    counters_t *restemp = counters_new();
+    resultholder->result = restemp;
+    //perform union
     counters_iterate(prodholder->result, resultholder, union_iterator);
-    counters_delete(uniontemp);
 
     //display results
     //display_result(resultholder->result, dirname);
@@ -362,8 +385,9 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     counters_print(resultholder->result, stdout);
     fprintf(stdout, "\n");
 
-    counters_delete(resultholder->result); //this is the same as sum
-    free(resultholder); free(prodholder);
+    counters_delete(prodholder->result);
+    counters_delete(resultholder->result);
+    free(prodholder); free(resultholder);
 }
 
 
