@@ -143,6 +143,7 @@ static void printSeparator() {
     for (int i = 0; i<38; i++) {
         fprintf(stdout, "-");
     }
+    fprintf(stdout, "\n");
 }
 
 // turns each line into an array of words
@@ -319,8 +320,13 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     for (int i = 0; i<nwords; i++) {
         //OR
         if (strcmp(words[i], "or") == 0) { 
+            //iterate twice to find union
             resultholder->first = prodholder->result;
             counters_iterate(index_find(index, words[i]), resultholder, union_iterator);
+            resultholder->first = index_find(index, words[i]);
+            counters_iterate(prodholder->result, resultholder, union_iterator);
+            //delete prod; clean up
+            counters_delete(prodholder->result);
             prod_is_empty = true;
         }
         //AND
@@ -329,7 +335,11 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
         else { 
             //if this is the first word after an or, set prod to it by default
             if (prod_is_empty) {
-                prodholder->result = index_find(index, words[i]);
+                //place a new empty result counters in prod
+                counters_t *temp = counters_new();
+                prodholder->result = temp;
+                //put words[i] into that counters
+                counters_iterate(index_find(index, words[i]), prodholder, union_iterator);
                 prod_is_empty = false;
             }
             //if it's not the first word after an or, take the intersection
@@ -342,7 +352,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     }
 
     display_result(resultholder->result, dirname);
-    counters_delete(sum);
+    counters_delete(resultholder->result); //this is the same as sum
     free(resultholder); free(prodholder);
 }
 
@@ -350,6 +360,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
 void display_result(counters_t *answer, char *dirname) {
     //count size of answer - count_iterator
     int *size = malloc(sizeof(int));
+    *size = 0; //initialize to 0
     counters_iterate(answer, size, count_iterator);
 
     //create array of structs to store ctr data
@@ -414,7 +425,7 @@ static void intersection_iterator(void *arg, const int key, const int count1) {
 static void union_iterator(void *arg, const int key, const int count) {
     struct twoctr *two = arg;
     int count2 = 0;
-    if ((count2 = counters_get(two->first, key)) != 0) { //if it's in both
+    if ((count2 = counters_get(two->first, key)) != 0) { //if key is in both counters
         counters_set(two->result, key, count2 + count); //set answer with the sum of both values
     }
     else {
@@ -533,6 +544,8 @@ static void test_union() {
     two->first = test1;
     two->result = answer;
     counters_iterate(test2, two, union_iterator); //union
+    two->first = test2;
+    counters_iterate(test1, two, union_iterator);
     fprintf(stdout, "RESULT: \n");
     counters_print(answer, stdout);
     fprintf(stdout, "\n");
