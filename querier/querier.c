@@ -36,14 +36,14 @@ typedef struct ctrdata {
 
 /**************** FUNCTION DECLARATIONS ***********************/
 void query_user(index_t *index, char *dirname);
-char **get_words(char *line);
+char **get_words(char *line, int *nwords);
 void run_query(char **words, int nwords, index_t *index, char *dirname);
 void display_result(counters_t *answer, char *dirname);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
 static void printQuery(char **words, int nwords);
 static void printSeparator();
-static char ** checkOperators(char **words, int nwords);
+static bool hasCorrectOperators(char **words, int nwords);
 static char* getURL(int doc_id, char *dirname);
 //iterators
 static void intersection_iterator(void *arg, const int key, const int count1);
@@ -98,9 +98,9 @@ int main(const int argc, char **argv) {
     return status;
 #endif
 #ifdef UNITTEST
-    test_words();
-    test_union();
+    test_input();
     test_intersection();
+    test_union();
     test_sort();
     return status;
 #endif
@@ -113,23 +113,26 @@ int main(const int argc, char **argv) {
 void query_user(index_t *index, char *dirname) {
     char *line;
     char **words;
+    int *nwords = malloc(sizeof(int));
     //read each line
     while ((line = freadlinep(stdin)) != NULL) {
         //perform each query
-        if ((words = get_words(line)) != NULL) {
-            run_query(words, sizeof(words), index, dirname);
+        if ((words = get_words(line, nwords)) != NULL) {
+            printQuery(words, *nwords);
+            run_query(words, *nwords, index, dirname);
             printSeparator();
-            free(line);
-            if (words != NULL) free(words); //this frees words and the prev freadlinep command
+            free(line); //free the prev freadlinep command
+            free(words); //free the array that stores it
         } //else query could not be run or is empty; error checking handled in get_words
     }
+    free(nwords);
 }
 
 //prints query
 static void printQuery(char **words, int nwords) {
     if (words == NULL) return;
     fprintf(stdout, "Query: ");
-    for (int i = 0; i < nwords+1; i++) {
+    for (int i = 0; i < nwords; i++) {
         fprintf(stdout, "%s ", words[i]);
     }
     fprintf(stdout, "\n");
@@ -145,7 +148,7 @@ static void printSeparator() {
 // turns each line into an array of words
 // uses provided allocation; allocates buffer to hold them (not words themselves)
 // isalpha error checking and whitespace normalization included
-char **get_words(char *line) {
+char **get_words(char *line, int *nwords) {
     const int max_words_in_line = 81;
     //initialize buffer
     char **words = calloc(max_words_in_line, sizeof(char));
@@ -212,6 +215,7 @@ char **get_words(char *line) {
                 else if (rest[0] == '\0') { //end of line
                     //put in array
                     words[words_index] = wordstart;
+                    words_index++;
                     endofword = true;
                     endofline = true; //exit loop
                 }
@@ -235,54 +239,58 @@ char **get_words(char *line) {
         }
     }
 
-    words = checkOperators(words, words_index); //returns null if operator error found; otherwise unchanged array
-    printQuery(words, words_index);
-    return words;
+    if (hasCorrectOperators(words, words_index)) {
+        *nwords = words_index;
+        return words;
+    } 
+    else {
+        return NULL;
+    }
 }
 
 //checks for starting "and" and "or" or double operators; 
 //returns null if found
 //otherwise, returns string array unchanged
-static char ** checkOperators(char **words, int nwords) {
+static bool hasCorrectOperators(char **words, int nwords) {
     char *last = NULL;
     //check for starting or ending operators
     if ((strcmp(words[0], "and")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"and\"\n");
         free(words);
-        return NULL;
+        return false;
     }
     else if ((strcmp(words[0], "or")) == 0) {
         fprintf(stderr, "Error: query may not begin with \"or\"\n");
         free(words);
-        return NULL;
+        return false;
     }
-    else if ((strcmp(words[nwords], "and")) == 0) {
+    else if ((strcmp(words[nwords-1], "and")) == 0) {
         fprintf(stderr, "Error: query may not end with \"and\"\n");
         free(words);
-        return NULL;
+        return false;
     }
-    else if ((strcmp(words[nwords], "or")) == 0) {
+    else if ((strcmp(words[nwords-1], "or")) == 0) {
         fprintf(stderr, "Error: query may not end with \"or\"\n");
         free(words);
-        return NULL;
+        return false;
     }
     //check for double operators
-    for (int i = 0; i <= nwords; i++) {
+    for (int i = 0; i < nwords; i++) {
         if (!NormalizeWord(words[i])) {
             fprintf(stderr, "Error: unable to normalize %s\n", words[i]);
             free(words);
-            return NULL;
+            return false;
             }
         if ((strcmp(words[i], "and") == 0) || (strcmp(words[i], "or") == 0)) {
             if ((strcmp(last, "and") == 0) || (strcmp(last, "or") == 0)) {
                 fprintf(stderr, "Error: query may not contain double operators\n");
                 free(words);
-                return NULL;
+                return false;
             }
         }
         last = words[i];
     }
-    return words;
+    return true;
 }
 
 //clears words so no strings are freed twice 
@@ -301,35 +309,41 @@ static void nullifyWords(char **words, int progress) {
 //runs a query (assumes all error checking has occurred prior to search)
 //memory allocation deals with result only; index remains unchanged
 void run_query(char **words, int nwords, index_t *index, char *dirname) {
-    counters_t *result = malloc(sizeof(counters_t*));
-    counters_t *ctr1 = index_find(index, words[0]);
-    struct twoctr *two = malloc(sizeof(struct twoctr *));
-    two->first = ctr1;
-    two->result = result;
-    //loop through words and respond as per operators
-    for (int i = 0; i < nwords; i++) {
-        if ((strcmp(words[i], "or")) == 0) {
-            //reset two datatype; result becomes ctr1
-            two->first = result;
-            counters_delete(two->result);
-            two->result = malloc(sizeof(counters_t*));
-            //perform union
-            counters_iterate(index_find(index, words[i]), two, union_iterator);
+    counters_t *sum = counters_new();
+    bool prod_is_empty = true; //sum is empty
+    struct twoctr *prodholder = malloc(sizeof(struct twoctr *));
+    struct twoctr *resultholder = malloc(sizeof(struct twoctr *));
+    resultholder->result = sum;
+
+    //for each word
+    for (int i = 0; i<nwords; i++) {
+        //OR
+        if (strcmp(words[i], "or") == 0) { 
+            resultholder->first = prodholder->result;
+            counters_iterate(index_find(index, words[i]), resultholder, union_iterator);
+            prod_is_empty = true;
         }
-        else if ((strcmp(words[i], "and")) == 0) {
-            //ignore if word is "and"
-        }
-        else {
-            //reset two datatype; result becomes ctr1
-            two->first = result;
-            counters_delete(two->result);
-            two->result = malloc(sizeof(counters_t*));
-            //perform intersection
-            counters_iterate(index_find(index, words[i]), two, intersection_iterator);
+        //AND
+        else if (strcmp(words[i], "and") == 0) {} //just ignore it
+        //ALL OTHER WORDS
+        else { 
+            //if this is the first word after an or, set prod to it by default
+            if (prod_is_empty) {
+                prodholder->result = index_find(index, words[i]);
+                prod_is_empty = false;
+            }
+            //if it's not the first word after an or, take the intersection
+            else  {
+                prodholder->first = prodholder->result;
+                counters_iterate(index_find(index, words[i]), prodholder, intersection_iterator);
+            }
+
         }
     }
-    display_result(two->result, dirname);
-    counters_delete(two->result);
+
+    display_result(resultholder->result, dirname);
+    counters_delete(sum);
+    free(resultholder); free(prodholder);
 }
 
 
@@ -441,32 +455,40 @@ static void test_input() {
     char *line2 = calloc(30, sizeof(char));
     char *line3 = calloc(30, sizeof(char));
     char *line4 = calloc(30, sizeof(char));
+    int *num1 = malloc(sizeof(int));
+    int *num2 = malloc(sizeof(int));
+    int *num3 = malloc(sizeof(int));
+    int *num4 = malloc(sizeof(int));
     sprintf(line1, "This is a normal string");
     sprintf(line2, "THIS STRING IS CAPITALIZED");
     sprintf(line3, "This str!ing h@s err0rs");
     sprintf(line4, "This string has and or operator errors");
     //break line into words
     fprintf(stdout, "Testing with \"%s\"\n", line1);
-    char **words1 = get_words(line1);
+    char **words1 = get_words(line1, num1);
+    printQuery(words1, *num1);
     fprintf(stdout, "Testing with \"%s\"\n", line2);
-    char **words2 = get_words(line2);
+    char **words2 = get_words(line2, num2);
+    printQuery(words2, *num2);
     fprintf(stdout, "Testing with \"%s\"\n", line3);
-    char **words3 = get_words(line3);
+    char **words3 = get_words(line3, num3);
+    printQuery(words3, *num3);
     fprintf(stdout, "Testing with \"%s\"\n", line4);
-    char **words4 = get_words(line4);
-    if (words3 == NULL) {} //silence compiler error with null return
-
+    char **words4 = get_words(line4, num4);
+    printQuery(words4, *num4);
     //free pointers
+    free(num1); free(num2); free(num3); free(num4);
     free(line1); free(line2); free(line3); free(line4);
     free(words1); free(words2); free(words4);
 }
 
-static void test_union() {
-    //-------------TEST 2: UNION----------------------//
-    //test union
-    counters_t *test1 = malloc(sizeof(counters_t *));
-    counters_t *test1 = malloc(sizeof(counters_t *));
-    counters_t *answer = malloc(sizeof(counters_t *));
+static void test_intersection() {
+    //-------------TEST 2: INTERSECTION----------------------//
+    //test intersection
+    fprintf(stdout, "Testing intersection...\n");
+    counters_t *test1 = counters_new();
+    counters_t *test2 = counters_new();
+    counters_t *answer = counters_new();
     counters_set(test1, 1, 1);
     counters_set(test1, 2, 2);
     counters_set(test1, 3, 5);
@@ -474,23 +496,28 @@ static void test_union() {
     counters_set(test2, 4, 2);
     counters_set(test2, 5, 5);
     fprintf(stdout, "TEST COUNTERS: \n");
-    counters_print(test1); counters_print(test2);
+    counters_print(test1, stdout); 
+    fprintf(stdout, "\n");
+    counters_print(test2, stdout);
+    fprintf(stdout, "\n");
     struct twoctr *two = malloc(sizeof(struct twoctr *));
     two->first = test1;
     two->result = answer;
     counters_iterate(test2, two, intersection_iterator); //intersection
     fprintf(stdout, "RESULT: \n");
-    counters_print(answer);
+    counters_print(answer, stdout);
+    fprintf(stdout, "\n");
     counters_delete(test1); counters_delete(test2); counters_delete(answer);
     free(two);
 }
 
-static void test_intersection() {
-    //-------------TEST 3: INTERSECTION----------------------//
-    //test intersection
-    counters_t *test1 = malloc(sizeof(counters_t *));
-    counters_t *test1 = malloc(sizeof(counters_t *));
-    counters_t *answer = malloc(sizeof(counters_t *));
+static void test_union() {
+    //-------------TEST 3: UNION----------------------//
+    //test union
+    fprintf(stdout, "Testing union...\n");
+    counters_t *test1 =counters_new();
+    counters_t *test2 = counters_new();
+    counters_t *answer = counters_new();
     counters_set(test1, 1, 1);
     counters_set(test1, 2, 2);
     counters_set(test1, 3, 5);
@@ -498,13 +525,17 @@ static void test_intersection() {
     counters_set(test2, 4, 2);
     counters_set(test2, 5, 5);
     fprintf(stdout, "TEST COUNTERS: \n");
-    counters_print(test1); counters_print(test2);
+    counters_print(test1, stdout); 
+    fprintf(stdout, "\n");
+    counters_print(test2, stdout);
+    fprintf(stdout, "\n");
     struct twoctr *two = malloc(sizeof(struct twoctr *));
     two->first = test1;
     two->result = answer;
     counters_iterate(test2, two, union_iterator); //union
     fprintf(stdout, "RESULT: \n");
-    counters_print(answer);
+    counters_print(answer, stdout);
+    fprintf(stdout, "\n");
     counters_delete(test1); counters_delete(test2); counters_delete(answer);
     free(two);
 }
