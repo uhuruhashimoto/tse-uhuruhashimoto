@@ -41,21 +41,26 @@ void run_query(char **words, int nwords, index_t *index, char *dirname);
 void display_result(counters_t *answer, char *dirname);
 
 /*************** STATIC/LOCAL FUNCTIONS (HELPERS) ***********************/
-static void free_words(char **words);
 static void printQuery(char **words, int nwords);
 static void printSeparator();
 static char ** checkOperators(char **words, int nwords);
 static char* getURL(int doc_id, char *dirname);
 //iterators
-static void and_iterator(void *arg, const int key, const int count1);
-static void or_iterator(void *arg, const int key, const int count);
+static void intersection_iterator(void *arg, const int key, const int count1);
+static void union_iterator(void *arg, const int key, const int count);
 static void count_iterator(void *arg, const int key, const int count);
 static void sort_iterator(void *arg, const int key, const int count);
 static void nullifyWords(char **words, int progress);
-//unit test
+//unit tests
 #ifdef UNITTEST
-static int unittest();
+static void test_input();
+static void test_union();
+static void test_intersection();
+static void test_sort();
 #endif
+
+/**************** DRIVER ***********************/
+/*******************************************************************/
 
 // driver; checks arguments and initiates loop
 int main(const int argc, char **argv) {
@@ -93,12 +98,18 @@ int main(const int argc, char **argv) {
     return status;
 #endif
 #ifdef UNITTEST
-    status += unittest();
+    test_words();
+    test_union();
+    test_intersection();
+    test_sort();
     return status;
 #endif
 }
 
-//queries user
+/**************** INPUT HANDLING ***********************/
+/*******************************************************************/
+
+//queries user in a loop using freadlinep
 void query_user(index_t *index, char *dirname) {
     char *line;
     char **words;
@@ -108,18 +119,13 @@ void query_user(index_t *index, char *dirname) {
         if ((words = get_words(line)) != NULL) {
             run_query(words, sizeof(words), index, dirname);
             printSeparator();
-            free_words(words); //this frees words and the prev freadlinep command
+            free(line);
+            if (words != NULL) free(words); //this frees words and the prev freadlinep command
         } //else query could not be run or is empty; error checking handled in get_words
     }
 }
 
-static void free_words(char **words) {
-    for (int i = 0; i < sizeof(words); i++) {
-        if (words[i] != NULL) free (words[i]);
-    }
-    free(words);
-}
-
+//prints query
 static void printQuery(char **words, int nwords) {
     if (words == NULL) return;
     fprintf(stdout, "Query: ");
@@ -129,6 +135,7 @@ static void printQuery(char **words, int nwords) {
     fprintf(stdout, "\n");
 }
 
+//prints separator
 static void printSeparator() {
     for (int i = 0; i<38; i++) {
         fprintf(stdout, "-");
@@ -233,68 +240,6 @@ char **get_words(char *line) {
     return words;
 }
 
-//clears words so no strings are freed twice
-static void nullifyWords(char **words, int progress) {
-    for (int i = 0; i < progress; i++) {
-        if (words[i] != NULL) words[i] = NULL;
-    }
-}
-
-//runs a query (assumes all error checking has occurred prior to search)
-//memory allocation deals with result only; index remains unchanged
-void run_query(char **words, int nwords, index_t *index, char *dirname) {
-    counters_t *result = malloc(sizeof(counters_t*));
-    counters_t *ctr1 = index_find(index, words[0]);
-    struct twoctr *two = malloc(sizeof(struct twoctr *));
-    two->first = ctr1;
-    two->result = result;
-    //loop through words and respond as per operators
-    for (int i = 0; i < nwords; i++) {
-        if ((strcmp(words[i], "or")) == 0) {
-            //reset two datatype; result becomes ctr1
-            two->first = result;
-            counters_delete(two->result);
-            two->result = malloc(sizeof(counters_t*));
-            //perform union
-            counters_iterate(index_find(index, words[i]), two, or_iterator);
-        }
-        else if ((strcmp(words[i], "and")) == 0) {
-            //ignore if word is "and"
-        }
-        else {
-            //reset two datatype; result becomes ctr1
-            two->first = result;
-            counters_delete(two->result);
-            two->result = malloc(sizeof(counters_t*));
-            //perform intersection
-            counters_iterate(index_find(index, words[i]), two, and_iterator);
-        }
-    }
-    display_result(two->result, dirname);
-    counters_delete(two->result);
-}
-
-
-void display_result(counters_t *answer, char *dirname) {
-    //count size of answer - count_iterator
-    int *size = malloc(sizeof(int));
-    counters_iterate(answer, size, count_iterator);
-
-    //create array of structs to store ctr data
-    struct ctrdata **sorted = calloc(*size, sizeof(struct ctrdata *));
-    //add to diff struct - sort_iterator
-    counters_iterate(answer, sorted, sort_iterator);
-
-    //get URLs and print results 
-    for (int i = 0; i < *size; i++) {
-        char *url = getURL(sorted[i]->doc_id, dirname);
-        fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted[i]->doc_id, sorted[i]->value, url);
-        free(url);
-    }
-    //clean up
-    free(size);
-}
-
 //checks for starting "and" and "or" or double operators; 
 //returns null if found
 //otherwise, returns string array unchanged
@@ -340,6 +285,76 @@ static char ** checkOperators(char **words, int nwords) {
     return words;
 }
 
+//clears words so no strings are freed twice 
+//used when a non-alphabetic char is encountered halfway through the string parsing process
+//(simply sets each word in words to null, so that the memory can be freed by a call to free 
+//the original line)
+static void nullifyWords(char **words, int progress) {
+    for (int i = 0; i < progress; i++) {
+        if (words[i] != NULL) words[i] = NULL;
+    }
+}
+
+/**************** RUN QUERY ***********************/
+/*******************************************************************/
+
+//runs a query (assumes all error checking has occurred prior to search)
+//memory allocation deals with result only; index remains unchanged
+void run_query(char **words, int nwords, index_t *index, char *dirname) {
+    counters_t *result = malloc(sizeof(counters_t*));
+    counters_t *ctr1 = index_find(index, words[0]);
+    struct twoctr *two = malloc(sizeof(struct twoctr *));
+    two->first = ctr1;
+    two->result = result;
+    //loop through words and respond as per operators
+    for (int i = 0; i < nwords; i++) {
+        if ((strcmp(words[i], "or")) == 0) {
+            //reset two datatype; result becomes ctr1
+            two->first = result;
+            counters_delete(two->result);
+            two->result = malloc(sizeof(counters_t*));
+            //perform union
+            counters_iterate(index_find(index, words[i]), two, union_iterator);
+        }
+        else if ((strcmp(words[i], "and")) == 0) {
+            //ignore if word is "and"
+        }
+        else {
+            //reset two datatype; result becomes ctr1
+            two->first = result;
+            counters_delete(two->result);
+            two->result = malloc(sizeof(counters_t*));
+            //perform intersection
+            counters_iterate(index_find(index, words[i]), two, intersection_iterator);
+        }
+    }
+    display_result(two->result, dirname);
+    counters_delete(two->result);
+}
+
+
+void display_result(counters_t *answer, char *dirname) {
+    //count size of answer - count_iterator
+    int *size = malloc(sizeof(int));
+    counters_iterate(answer, size, count_iterator);
+
+    //create array of structs to store ctr data
+    struct ctrdata **sorted = calloc(*size, sizeof(struct ctrdata *));
+    //add to diff struct - sort_iterator
+    counters_iterate(answer, sorted, sort_iterator);
+
+    //get URLs and print results 
+    for (int i = 0; i < *size; i++) {
+        char *url = getURL(sorted[i]->doc_id, dirname);
+        fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted[i]->doc_id, sorted[i]->value, url);
+        free(url);
+    }
+    //clean up
+    free(size);
+}
+
+
+
 // allocates string to give url (first line of dirname/doc_id)
 // returns allocated string (left to user to free)
 static char* getURL(int doc_id, char *dirname) {
@@ -362,10 +377,11 @@ static char* getURL(int doc_id, char *dirname) {
 }
 
 /**************** COUNTER ITERATORS ***********************/
+/*******************************************************************/
 
 //intersection
 //takes intersection of two counters and puts in result counter
-static void and_iterator(void *arg, const int key, const int count1) {
+static void intersection_iterator(void *arg, const int key, const int count1) {
     struct twoctr *two  = arg;
     int count2 = 0; 
     if ((count2 = counters_get(two->first, key)) != 0) { //if key is in both counters
@@ -381,7 +397,7 @@ static void and_iterator(void *arg, const int key, const int count1) {
 
 //union
 //takes union of two counters and puts in result counter
-static void or_iterator(void *arg, const int key, const int count) {
+static void union_iterator(void *arg, const int key, const int count) {
     struct twoctr *two = arg;
     int count2 = 0;
     if ((count2 = counters_get(two->first, key)) != 0) { //if it's in both
@@ -410,9 +426,11 @@ static void sort_iterator(void *arg, const int key, const int count) {
     //insert when val >= (v)
 }
 
+/**************** UNIT TESTS ***********************/
+/*******************************************************************/
+
 #ifdef UNITTEST
-static int unittest() {
-    int ret = 0;
+static void test_input() {
     //-------------TEST 1: GET_WORDS----------------------//
     //create also read test string from stdin by uncommenting line below
     //char *line = freadlinep(stdin);
@@ -441,13 +459,57 @@ static int unittest() {
     //free pointers
     free(line1); free(line2); free(line3); free(line4);
     free(words1); free(words2); free(words4);
+}
 
-    //-------------TEST 1: SORT----------------------//
+static void test_union() {
+    //-------------TEST 2: UNION----------------------//
+    //test union
+    counters_t *test1 = malloc(sizeof(counters_t *));
+    counters_t *test1 = malloc(sizeof(counters_t *));
+    counters_t *answer = malloc(sizeof(counters_t *));
+    counters_set(test1, 1, 1);
+    counters_set(test1, 2, 2);
+    counters_set(test1, 3, 5);
+    counters_set(test2, 3, 1);
+    counters_set(test2, 4, 2);
+    counters_set(test2, 5, 5);
+    fprintf(stdout, "TEST COUNTERS: \n");
+    counters_print(test1); counters_print(test2);
+    struct twoctr *two = malloc(sizeof(struct twoctr *));
+    two->first = test1;
+    two->result = answer;
+    counters_iterate(test2, two, intersection_iterator); //intersection
+    fprintf(stdout, "RESULT: \n");
+    counters_print(answer);
+    counters_delete(test1); counters_delete(test2); counters_delete(answer);
+    free(two);
+}
 
-    return ret;
+static void test_intersection() {
+    //-------------TEST 3: INTERSECTION----------------------//
+    //test intersection
+    counters_t *test1 = malloc(sizeof(counters_t *));
+    counters_t *test1 = malloc(sizeof(counters_t *));
+    counters_t *answer = malloc(sizeof(counters_t *));
+    counters_set(test1, 1, 1);
+    counters_set(test1, 2, 2);
+    counters_set(test1, 3, 5);
+    counters_set(test2, 3, 1);
+    counters_set(test2, 4, 2);
+    counters_set(test2, 5, 5);
+    fprintf(stdout, "TEST COUNTERS: \n");
+    counters_print(test1); counters_print(test2);
+    struct twoctr *two = malloc(sizeof(struct twoctr *));
+    two->first = test1;
+    two->result = answer;
+    counters_iterate(test2, two, union_iterator); //union
+    fprintf(stdout, "RESULT: \n");
+    counters_print(answer);
+    counters_delete(test1); counters_delete(test2); counters_delete(answer);
+    free(two);
+}
+
+static void test_sort() {
+     //-------------TEST 4: SORT----------------------//
 }
 #endif
-
-
-
-
