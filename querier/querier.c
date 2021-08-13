@@ -347,11 +347,21 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
                 prodholder->first = prodholder->result;
                 counters_iterate(index_find(index, words[i]), prodholder, intersection_iterator);
             }
-
         }
     }
+    //At the end of the loop, take the union of sum and prod once again
+    counters_t *uniontemp = counters_new();
+    resultholder->first = uniontemp;
+    counters_iterate(prodholder->result, resultholder, union_iterator);
+    counters_delete(uniontemp);
 
-    display_result(resultholder->result, dirname);
+    //display results
+    //display_result(resultholder->result, dirname);
+    //TODO: for now: 
+    fprintf(stdout, "RESULT OF SEARCH: ");
+    counters_print(resultholder->result, stdout);
+    fprintf(stdout, "\n");
+
     counters_delete(resultholder->result); //this is the same as sum
     free(resultholder); free(prodholder);
 }
