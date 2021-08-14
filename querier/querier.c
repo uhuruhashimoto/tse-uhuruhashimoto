@@ -45,12 +45,13 @@ static void printQuery(char **words, int nwords);
 static void printSeparator();
 static bool hasCorrectOperators(char **words, int nwords);
 static char* getURL(int doc_id, char *dirname);
+static void nullifyWords(char **words, int progress);
 //iterators
 static void intersection_iterator(void *arg, const int key, const int count1);
 static void union_iterator(void *arg, const int key, const int count);
 static void count_iterator(void *arg, const int key, const int count);
 static void sort_iterator(void *arg, const int key, const int count);
-static void nullifyWords(char **words, int progress);
+static void copy_iterator(void *arg, const int key, const int count);
 //unit tests
 #ifdef UNITTEST
 static void test_input();
@@ -325,6 +326,10 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     resultholder->first = sumfirst;
     resultholder->result = sum;
 
+    //put first value in prod
+    counters_iterate(index_find(index, words[0]), prodholder, copy_iterator);
+
+
     //for each word
     for (int i = 0; i<nwords; i++) {
         //OR
@@ -483,6 +488,13 @@ static void sort_iterator(void *arg, const int key, const int count) {
 
     //compare val to each (k,v) pair in sorted array
     //insert when val >= (v)
+}
+
+//copies counter into result counter of two struct
+//overwrites existing counter
+static void copy_iterator(void *arg, const int key, const int count) {
+    struct twoctr *two = arg;
+    counters_set(two->result, key, count);
 }
 
 /**************** UNIT TESTS ***********************/
