@@ -326,7 +326,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     resultholder->first = sumfirst;
     resultholder->result = sum;
 
-    //put first value in prod
+    //put first value in prod (copy it over)
     counters_iterate(index_find(index, words[0]), prodholder, copy_iterator);
 
 
