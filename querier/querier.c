@@ -314,18 +314,26 @@ static void nullifyWords(char **words, int progress) {
 // allocates string to give url (first line of dirname/doc_id)
 // returns allocated string (left to user to free)
 static char* getURL(int doc_id, char *dirname) {
+    //initial error checks
+    char *message = "No Url Available"; //failure message for url
+    char *ret = NULL;
+    if (dirname == NULL) {
+        ret = malloc(strlen(message)+1); //allocate ret string
+        strcpy(ret, message);
+        return ret;
+    }
+
+    //variable declarations
     FILE *fp = NULL;
     char *doc = intToString(doc_id);
     char *filename = filenameCreator(dirname, doc);
-    char *ret = NULL;
-    char *message = "No Url Available"; //failure message for url
 
     if ((fp = fopen(filename, "r")) != NULL) {
         ret = freadlinep(fp);
     }
     else {
-        ret = malloc(sizeof(char)*sizeof(message)); //allocate string to be freed later
-        strcpy(message, ret);
+        ret = malloc(strlen(message)+1); //allocate string to be freed later
+        strcpy(ret, message);
     }
     free(filename);
     free(doc);
@@ -451,7 +459,7 @@ void display_result(counters_t *answer, char *dirname) {
     counters_iterate(answer, sorted_and_index, sort_iterator);
 
 //unit test printing (no directory provided)
-#ifdef UNITTEST
+#ifndef UNITTEST
     if (dirname == NULL) {
         for (int i = 0; i < *size; i++) {
         fprintf(stdout, "Doc:   %d  Score   %d  \n", sorted_and_index->array[i].doc_id,
@@ -459,13 +467,13 @@ void display_result(counters_t *answer, char *dirname) {
     }
     }
 #endif
-#ifndef UNITTEST
+#ifdef UNITTEST
     //get URLs and print results 
     for (int i = 0; i < *size; i++) {
         char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
         fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted_and_index->array[i].doc_id,
             sorted_and_index->array[i].value, url); 
-        free(url);
+        if (url != NULL) free(url);
     }
 #endif
     //clean up
