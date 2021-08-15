@@ -35,7 +35,7 @@ typedef struct ctrdata {
 } ctrdata_t;
 
 typedef struct arraywithindex {
-    struct ctrdata **array;
+    struct ctrdata *array;
     int *index;
 } arraywithindex_t;
 
@@ -340,6 +340,11 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
             resultholder->result = restemp;
             //perform union
             counters_iterate(prodholder->result, resultholder, union_iterator);
+            //TODO: put prodholder in resultholder first, and iterate again
+            /*counters_delete(resultholder->first);
+            resultholder->first = prodholder->result;
+            counters_iterate(prodholder->result, resultholder, union_iterator);*/
+
             //delete prod
             counters_delete(prodholder->first);
             counters_delete(prodholder->result);
@@ -357,6 +362,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
                 prodholder->result = pres;
                 //perform intersection
                 counters_iterate(index_find(index, words[i]), prodholder, copy_iterator);
+                prod_is_empty = false;
             }
             else {
                 //put res into first
@@ -380,6 +386,9 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     resultholder->result = restemp;
     //perform union
     counters_iterate(prodholder->result, resultholder, union_iterator);
+    /*counters_delete(resultholder->first);
+    resultholder->first = prodholder->result;
+    counters_iterate(prodholder->result, resultholder, union_iterator);*/
 
     //TODO: for now: 
     fprintf(stdout, "RESULT OF SEARCH: ");
@@ -402,21 +411,18 @@ void display_result(counters_t *answer, char *dirname) {
     *size = 0; //initialize to 0
     counters_iterate(answer, size, count_iterator);
 
+    if (*size == 0) {
+        fprintf(stdout, "No results.\n");
+        return;
+    }
+
     //create array of structs to store ctr data
     struct arraywithindex *sorted_and_index = malloc(sizeof(struct arraywithindex *));
-    struct ctrdata **sorted = calloc(*size, sizeof(struct ctrdata *));
+    struct ctrdata *sorted = calloc(*size, sizeof(struct ctrdata *));
     int *ind = malloc(sizeof(int));
     *ind = 0;
     sorted_and_index -> array = sorted;
     sorted_and_index -> index = ind;
-
-
-    //TODO: RANDO CHECK
-    struct ctrdata **test = calloc(3, sizeof(struct ctrdata *));
-    //seg faults here - not sure why; why doesn't an array work same as ptr?
-    test[0] -> doc_id = 3;
-    test[0] ->value = 1;
-
 
     //copy data into array
     counters_iterate(answer, sorted_and_index, copy_struct_iterator);
@@ -426,10 +432,10 @@ void display_result(counters_t *answer, char *dirname) {
 
     //get URLs and print results 
     for (int i = 0; i < *size; i++) {
-        char *url = getURL(sorted_and_index->array[i]->doc_id, dirname);
-        fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted_and_index->array[i]->doc_id,
-            sorted_and_index->array[i]->value, url);
-        free(url);
+        //char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
+        fprintf(stdout, "Doc:   %d  Score   %d  Url: TO BE ADDED\n", sorted_and_index->array[i].doc_id,
+            sorted_and_index->array[i].value); //url
+        //free(url);
     }
     //clean up
     free(sorted);
@@ -504,12 +510,12 @@ static void sort_iterator(void *arg, const int key, const int count) {
     int j = 0;
     struct arraywithindex *array_with_index = arg;
     int i = *array_with_index -> index;
-    struct ctrdata **sorted_array = array_with_index -> array;
+    struct ctrdata *sorted_array = array_with_index -> array;
     j = i - 1;
 
-    while (j >= 0 && sorted_array[j] -> value > count) {
-        sorted_array[j+1] -> doc_id = sorted_array[j] -> doc_id;
-        sorted_array[j+1] -> value = sorted_array[j] -> value;
+    while (j >= 0 && sorted_array[j].value > count) {
+        sorted_array[j+1].doc_id = sorted_array[j].doc_id;
+        sorted_array[j+1].value = sorted_array[j].value;
         j--;
     }
 
@@ -526,11 +532,11 @@ static void copy_iterator(void *arg, const int key, const int count) {
 //copies counter array of ctrdata nodes
 static void copy_struct_iterator(void *arg, const int key, const int count) {
     struct arraywithindex *array_with_index = arg;
-    struct ctrdata **sorted_array = array_with_index -> array;
+    struct ctrdata *sorted_array = array_with_index -> array;
     int i = *array_with_index -> index;
     //copy data
-    sorted_array[i] -> doc_id = key;
-    sorted_array[i] -> value = count;
+    sorted_array[i].doc_id = key;
+    sorted_array[i].value = count;
 }
 
 /**************** UNIT TESTS ***********************/
