@@ -587,6 +587,7 @@ static void test_input() {
     fprintf(stdout, "Testing with \"%s\"\n", line4);
     char **words4 = get_words(line4, num4);
     printQuery(words4, *num4);
+    fprintf(stdout, "\n");
     //free pointers
     free(num1); free(num2); free(num3); free(num4);
     free(line1); free(line2); free(line3); free(line4);
@@ -617,7 +618,7 @@ static void test_intersection() {
     counters_iterate(test2, two, intersection_iterator); //intersection
     fprintf(stdout, "RESULT: \n");
     counters_print(answer, stdout);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "\n\n");
     counters_delete(test1); counters_delete(test2); counters_delete(answer);
     free(two);
 }
@@ -648,13 +649,14 @@ static void test_union() {
     counters_iterate(test1, two, union_iterator);
     fprintf(stdout, "RESULT: \n");
     counters_print(answer, stdout);
-    fprintf(stdout, "\n");
+    fprintf(stdout, "\n\n");
     counters_delete(test1); counters_delete(test2); counters_delete(answer);
     free(two);
 }
 
 static void test_sort() {
     //-------------TEST 4: SORT----------------------//
+    fprintf(stdout, "Testing sort...\n");
     counters_t *test = counters_new();
     counters_set(test, 3, 5);
     counters_set(test, 2, 2);
