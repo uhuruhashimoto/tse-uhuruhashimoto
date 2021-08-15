@@ -338,12 +338,14 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
             //allocate new result
             counters_t *restemp = counters_new();
             resultholder->result = restemp;
-            //perform union
+            //perform union 1
             counters_iterate(prodholder->result, resultholder, union_iterator);
-            //TODO: put prodholder in resultholder first, and iterate again
-            /*counters_delete(resultholder->first);
+            //swap the two counters to get second union
+            counters_t *temp = resultholder->first;
             resultholder->first = prodholder->result;
-            counters_iterate(prodholder->result, resultholder, union_iterator);*/
+            prodholder->result = temp;
+            //perform union 2
+            counters_iterate(prodholder->result, resultholder, union_iterator);
 
             //delete prod
             counters_delete(prodholder->first);
@@ -384,11 +386,14 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     //allocate new result
     counters_t *restemp = counters_new();
     resultholder->result = restemp;
-    //perform union
+    //perform union 1
     counters_iterate(prodholder->result, resultholder, union_iterator);
-    /*counters_delete(resultholder->first);
+    //swap the two counters to get second union
+    counters_t *temp = resultholder->first;
     resultholder->first = prodholder->result;
-    counters_iterate(prodholder->result, resultholder, union_iterator);*/
+    prodholder->result = temp;
+    //perform union 2
+    counters_iterate(prodholder->result, resultholder, union_iterator);
 
     //TODO: for now: 
     fprintf(stdout, "RESULT OF SEARCH: ");
