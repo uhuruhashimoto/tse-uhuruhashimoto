@@ -49,7 +49,6 @@ void display_result(counters_t *answer, char *dirname);
 static void printQuery(char **words, int nwords);
 static void printSeparator();
 static bool hasCorrectOperators(char **words, int nwords);
-static char* getURL(int doc_id, char *dirname);
 static void nullifyWords(char **words, int progress);
 //iterators
 static void intersection_iterator(void *arg, const int key, const int count1);
@@ -435,6 +434,16 @@ void display_result(counters_t *answer, char *dirname) {
     *ind = 0;
     counters_iterate(answer, sorted_and_index, sort_iterator);
 
+//unit test printing (no directory provided)
+#ifdef UNITTEST
+    if (dirname == NULL) {
+        for (int i = 0; i < *size; i++) {
+        fprintf(stdout, "Doc:   %d  Score   %d  \n", sorted_and_index->array[i].doc_id,
+            sorted_and_index->array[i].value); 
+    }
+    }
+#endif
+#ifndef UNITTEST
     //get URLs and print results 
     for (int i = 0; i < *size; i++) {
         //char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
@@ -442,6 +451,7 @@ void display_result(counters_t *answer, char *dirname) {
             sorted_and_index->array[i].value); //url
         //free(url);
     }
+#endif
     //clean up
     free(sorted);
     free(ind);
@@ -450,27 +460,6 @@ void display_result(counters_t *answer, char *dirname) {
 }
 
 
-
-// allocates string to give url (first line of dirname/doc_id)
-// returns allocated string (left to user to free)
-static char* getURL(int doc_id, char *dirname) {
-    FILE *fp = NULL;
-    char *doc = intToString(doc_id);
-    char *filename = filenameCreator(dirname, doc);
-    char *ret = NULL;
-    const char *message = "No Url Available"; //failure message for url
-
-    if ((fp = fopen(filename, "r")) != NULL) {
-        ret = freadlinep(fp);
-    }
-    else {
-        ret = malloc(sizeof(char)*sizeof(message)); //allocate string to be freed later
-        strcpy(ret, message);
-    }
-    free(filename);
-    free(doc);
-    return ret;
-}
 
 /**************** COUNTER ITERATORS ***********************/
 /*******************************************************************/
@@ -527,7 +516,7 @@ static void sort_iterator(void *arg, const int key, const int count) {
     *array_with_index -> index = i + 1;
 }
 
-//copies counter into result counter of two struct
+//copies counter into result counter of a two-ctr struct
 //overwrites existing counter
 static void copy_iterator(void *arg, const int key, const int count) {
     struct twoctr *two = arg;
@@ -542,6 +531,7 @@ static void copy_struct_iterator(void *arg, const int key, const int count) {
     //copy data
     sorted_array[i].doc_id = key;
     sorted_array[i].value = count;
+    *array_with_index -> index = i + 1;
 }
 
 /**************** UNIT TESTS ***********************/
@@ -648,16 +638,15 @@ static void test_union() {
 
 static void test_sort() {
     //-------------TEST 4: SORT----------------------//
-    counters_t *test =counters_new();
-    counters_set(test, 1, 1);
-    counters_set(test, 2, 2);
+    counters_t *test = counters_new();
     counters_set(test, 3, 5);
+    counters_set(test, 2, 2);
+    counters_set(test, 1, 1);
     fprintf(stdout, "TEST COUNTER: \n");
     counters_print(test, stdout); 
     fprintf(stdout, "\n");
-    //struct ctrdata **sorted = malloc(sizeof())
     fprintf(stdout, "SORTED RESULT: \n");
-    //display result
+    display_result(test, NULL);
     counters_delete(test);
 }
 #endif
