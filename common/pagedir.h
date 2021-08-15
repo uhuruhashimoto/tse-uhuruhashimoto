@@ -57,3 +57,4 @@ bool isCrawlerDirectory(char *dirname);
 * closes file after opening
 */
 bool isReadableFile(char *filename);
+

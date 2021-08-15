@@ -18,6 +18,7 @@ char *intToString(int num);
 int stringToInt(char *string);
 bool isReadableFile(char *filename);
 bool isCrawlerDirectory(char *dirname);
+char* getURL(int doc_id, char *dirname);
 
 // opens a file "crawler" in the specified directory 
 // to check its existence and write permissions
@@ -141,4 +142,25 @@ bool isReadableFile(char *filename) {
     }
     fclose(fp);
     return true;
+}
+
+// allocates string to give url (first line of dirname/doc_id)
+// returns allocated string (left to user to free)
+char* getURL(int doc_id, char *dirname) {
+    FILE *fp = NULL;
+    char *doc = intToString(doc_id);
+    char *filename = filenameCreator(dirname, doc);
+    char *ret = NULL;
+    const char *message = "No Url Available"; //failure message for url
+
+    if ((fp = fopen(filename, "r")) != NULL) {
+        ret = freadlinep(fp);
+    }
+    else {
+        ret = malloc(sizeof(char)*sizeof(message)); //allocate string to be freed later
+        strcpy(message, ret);
+    }
+    free(filename);
+    free(doc);
+    return ret;
 }
