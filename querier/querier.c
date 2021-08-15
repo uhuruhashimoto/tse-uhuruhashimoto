@@ -120,7 +120,7 @@ int main(const int argc, char **argv) {
 void query_user(index_t *index, char *dirname) {
     char *line;
     char **words;
-    int *nwords = malloc(sizeof(int));
+    int *nwords = malloc(sizeof(int *));
     //read each line
     while ((line = freadlinep(stdin)) != NULL) {
         //perform each query
@@ -131,6 +131,10 @@ void query_user(index_t *index, char *dirname) {
             free(line); //free the prev freadlinep command
             free(words); //free the array that stores it
         } //else query could not be run or is empty; error checking handled in get_words
+        else {
+            printSeparator();
+            free(line);
+        }
     }
     free(nwords);
 }
@@ -153,7 +157,7 @@ static void printSeparator() {
     fprintf(stdout, "\n");
 }
 
-// turns each line into an array of words
+// turns each line into an array of words, setting int pointer to number of words
 // uses provided allocation; allocates buffer to hold them (not words themselves)
 // isalpha error checking and whitespace normalization included
 char **get_words(char *line, int *nwords) {
@@ -181,11 +185,31 @@ char **get_words(char *line, int *nwords) {
                     //ignore whitespace
                     i++;
                 }
+                //either encountered empty string (only spaces), or a string with a space after last char
                 else if (wordstart[0] == '\0') {
-                    //empty string: return empty array
-                    nullifyWords(words, words_index);
-                    free(words);
-                    return NULL;
+                    //case 1: empty string
+                    if (strlen(line) == 0) {
+                        free(words);
+                        return NULL;
+                    }
+                    //case 2: string only spaces
+                    else {
+                        bool is_only_spaces = true;
+                        for (int i = 0; i < strlen(line); i++) {
+                            if (!isspace(line[i])) is_only_spaces = false;
+                        }
+                        if (is_only_spaces) {
+                            free(words);
+                            return NULL;
+                        }
+                        //case 3: string ended with a space
+                        else {
+                            //get me out of this loop
+                            endofword = true;
+                            startofword = true;
+                            endofline = true;
+                        }
+                    }
                 }
                 else {
                     //if non-alphabetic character encountered (ex !cat), print error and exit
@@ -330,6 +354,7 @@ static char* getURL(int doc_id, char *dirname) {
 
     if ((fp = fopen(filename, "r")) != NULL) {
         ret = freadlinep(fp);
+        fclose(fp);
     }
     else {
         ret = malloc(strlen(message)+1); //allocate string to be freed later
@@ -426,8 +451,10 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
 
     //display results
     display_result(resultholder->result, dirname);
-
+    
+    counters_delete(prodholder->first);
     counters_delete(prodholder->result);
+    counters_delete(resultholder->first);
     counters_delete(resultholder->result);
     free(prodholder); free(resultholder);
 }
@@ -435,7 +462,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
 
 void display_result(counters_t *answer, char *dirname) {
     //count size of answer - count_iterator
-    int *size = malloc(sizeof(int));
+    int *size = malloc(sizeof(int *));
     *size = 0; //initialize to 0
     counters_iterate(answer, size, count_iterator);
 
@@ -447,7 +474,7 @@ void display_result(counters_t *answer, char *dirname) {
     //create array of structs to store ctr data
     struct arraywithindex *sorted_and_index = malloc(sizeof(struct arraywithindex *));
     struct ctrdata *sorted = calloc(*size, sizeof(struct ctrdata *));
-    int *ind = malloc(sizeof(int));
+    int *ind = malloc(sizeof(int *));
     *ind = 0;
     sorted_and_index -> array = sorted;
     sorted_and_index -> index = ind;
@@ -566,10 +593,10 @@ static void test_input() {
     char *line2 = calloc(30, sizeof(char));
     char *line3 = calloc(30, sizeof(char));
     char *line4 = calloc(30, sizeof(char));
-    int *num1 = malloc(sizeof(int));
-    int *num2 = malloc(sizeof(int));
-    int *num3 = malloc(sizeof(int));
-    int *num4 = malloc(sizeof(int));
+    int *num1 = malloc(sizeof(int *));
+    int *num2 = malloc(sizeof(int *));
+    int *num3 = malloc(sizeof(int *));
+    int *num4 = malloc(sizeof(int *));
     sprintf(line1, "This is a normal string");
     sprintf(line2, "THIS STRING IS CAPITALIZED");
     sprintf(line3, "This str!ing h@s err0rs");
