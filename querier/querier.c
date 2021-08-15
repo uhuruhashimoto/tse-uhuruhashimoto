@@ -34,6 +34,11 @@ typedef struct ctrdata {
     int value;
 } ctrdata_t;
 
+typedef struct arraywithindex {
+    struct ctrdata **array;
+    int *index;
+} arraywithindex_t;
+
 /**************** FUNCTION DECLARATIONS ***********************/
 void query_user(index_t *index, char *dirname);
 char **get_words(char *line, int *nwords);
@@ -314,21 +319,13 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     //allocate holders for prod and result
     struct twoctr *prodholder = malloc(sizeof(struct twoctr *));
     struct twoctr *resultholder = malloc(sizeof(struct twoctr *));
-    bool prod_is_empty = false;
+    bool prod_is_empty = true;
 
     //fill holders with dummy counters
-    counters_t *prodfirst = counters_new();
     counters_t *sumfirst = counters_new();
-    counters_t *prod = counters_new();
     counters_t *sum = counters_new();
-    prodholder->first = prodfirst;
-    prodholder->result = prod;
     resultholder->first = sumfirst;
     resultholder->result = sum;
-
-    //put first value in prod (copy it over)
-    counters_iterate(index_find(index, words[0]), prodholder, copy_iterator);
-
 
     //for each word
     for (int i = 0; i<nwords; i++) {
@@ -341,7 +338,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
             counters_t *restemp = counters_new();
             resultholder->result = restemp;
             //perform union
-            counters_iterate(index_find(index, words[i]), resultholder, union_iterator);
+            counters_iterate(prodholder->result, resultholder, union_iterator);
             //delete prod
             counters_delete(prodholder->first);
             counters_delete(prodholder->result);
@@ -358,7 +355,7 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
                 prodholder->first = pfirst;
                 prodholder->result = pres;
                 //perform intersection
-                counters_iterate(index_find(index, words[i]), prodholder, union_iterator);
+                counters_iterate(index_find(index, words[i]), prodholder, copy_iterator);
             }
             else {
                 //put res into first
@@ -404,6 +401,11 @@ void display_result(counters_t *answer, char *dirname) {
 
     //create array of structs to store ctr data
     struct ctrdata **sorted = calloc(*size, sizeof(struct ctrdata *));
+    struct arraywithindex *sorted_and_index = malloc(sizeof(struct arraywithindex *));
+    int *ind = malloc(sizeof(int));
+    *ind = 0;
+    sorted_and_index -> array = sorted;
+    sorted_and_index -> index = ind;
     //add to diff struct - sort_iterator
     counters_iterate(answer, sorted, sort_iterator);
 
@@ -414,6 +416,9 @@ void display_result(counters_t *answer, char *dirname) {
         free(url);
     }
     //clean up
+    free(sorted);
+    free(ind);
+    free(sorted_and_index);
     free(size);
 }
 
@@ -480,14 +485,19 @@ static void count_iterator(void *arg, const int key, const int count) {
 
 //sorts counters and adds to an array of structs provided in *arg
 static void sort_iterator(void *arg, const int key, const int count) {
-    //initialize struct (with doc_id and value)
-    //TODO: struct ctrdata **sorted = arg;
+    int j = 0;
+    struct arraywithindex *array_with_index = arg;
+    int i = *array_with_index -> index;
+    struct ctrdata **sorted_array = array_with_index -> array;
+    j = i - 1;
 
-    //add (key, count) pair to sorted array 
-    //sort by count
+    while (j >= 0 && sorted_array[j]->value > count) {
+        sorted_array[j+1]->doc_id = sorted_array[j] -> doc_id;
+        sorted_array[j+1] ->value = sorted_array[j] -> value;
+        j--;
+    }
 
-    //compare val to each (k,v) pair in sorted array
-    //insert when val >= (v)
+    array_with_index -> index++;
 }
 
 //copies counter into result counter of two struct
@@ -600,6 +610,17 @@ static void test_union() {
 }
 
 static void test_sort() {
-     //-------------TEST 4: SORT----------------------//
+    //-------------TEST 4: SORT----------------------//
+    counters_t *test =counters_new();
+    counters_set(test, 1, 1);
+    counters_set(test, 2, 2);
+    counters_set(test, 3, 5);
+    fprintf(stdout, "TEST COUNTER: \n");
+    counters_print(test, stdout); 
+    fprintf(stdout, "\n");
+    //struct ctrdata **sorted = malloc(sizeof())
+    fprintf(stdout, "SORTED RESULT: \n");
+    //display result
+    counters_delete(test);
 }
 #endif
