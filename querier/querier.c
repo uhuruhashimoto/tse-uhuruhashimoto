@@ -458,24 +458,14 @@ void display_result(counters_t *answer, char *dirname) {
     *ind = 0;
     counters_iterate(answer, sorted_and_index, sort_iterator);
 
-//unit test printing (no directory provided)
-#ifndef UNITTEST
-    if (dirname == NULL) {
-        for (int i = 0; i < *size; i++) {
-        fprintf(stdout, "Doc:   %d  Score   %d  \n", sorted_and_index->array[i].doc_id,
-            sorted_and_index->array[i].value); 
-    }
-    }
-#endif
-#ifdef UNITTEST
     //get URLs and print results 
     for (int i = 0; i < *size; i++) {
         char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
         fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted_and_index->array[i].doc_id,
             sorted_and_index->array[i].value, url); 
-        if (url != NULL) free(url);
+        free(url);
     }
-#endif
+
     //clean up
     free(sorted);
     free(ind);
