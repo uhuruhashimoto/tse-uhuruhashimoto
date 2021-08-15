@@ -50,6 +50,7 @@ static void printQuery(char **words, int nwords);
 static void printSeparator();
 static bool hasCorrectOperators(char **words, int nwords);
 static void nullifyWords(char **words, int progress);
+static char* getURL(int doc_id, char *dirname);
 //iterators
 static void intersection_iterator(void *arg, const int key, const int count1);
 static void union_iterator(void *arg, const int key, const int count);
@@ -310,6 +311,27 @@ static void nullifyWords(char **words, int progress) {
     }
 }
 
+// allocates string to give url (first line of dirname/doc_id)
+// returns allocated string (left to user to free)
+static char* getURL(int doc_id, char *dirname) {
+    FILE *fp = NULL;
+    char *doc = intToString(doc_id);
+    char *filename = filenameCreator(dirname, doc);
+    char *ret = NULL;
+    char *message = "No Url Available"; //failure message for url
+
+    if ((fp = fopen(filename, "r")) != NULL) {
+        ret = freadlinep(fp);
+    }
+    else {
+        ret = malloc(sizeof(char)*sizeof(message)); //allocate string to be freed later
+        strcpy(message, ret);
+    }
+    free(filename);
+    free(doc);
+    return ret;
+}
+
 /**************** RUN QUERY ***********************/
 /*******************************************************************/
 
@@ -394,12 +416,6 @@ void run_query(char **words, int nwords, index_t *index, char *dirname) {
     //perform union 2
     counters_iterate(prodholder->result, resultholder, union_iterator);
 
-    //TODO: for now: 
-    fprintf(stdout, "RESULT OF SEARCH: ");
-    counters_print(resultholder->result, stdout);
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Attempting to display results...\n");
-
     //display results
     display_result(resultholder->result, dirname);
 
@@ -446,10 +462,10 @@ void display_result(counters_t *answer, char *dirname) {
 #ifndef UNITTEST
     //get URLs and print results 
     for (int i = 0; i < *size; i++) {
-        //char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
-        fprintf(stdout, "Doc:   %d  Score   %d  Url: TO BE ADDED\n", sorted_and_index->array[i].doc_id,
-            sorted_and_index->array[i].value); //url
-        //free(url);
+        char *url = getURL(sorted_and_index->array[i].doc_id, dirname);
+        fprintf(stdout, "Doc:   %d  Score   %d  Url: %s\n", sorted_and_index->array[i].doc_id,
+            sorted_and_index->array[i].value, url); 
+        free(url);
     }
 #endif
     //clean up
@@ -501,17 +517,20 @@ static void count_iterator(void *arg, const int key, const int count) {
 
 //sorts counters and adds to an array of structs provided in *arg
 static void sort_iterator(void *arg, const int key, const int count) {
-    int j = 0;
     struct arraywithindex *array_with_index = arg;
     int i = *array_with_index -> index;
     struct ctrdata *sorted_array = array_with_index -> array;
-    j = i - 1;
+    int j = i - 1;
 
-    while (j >= 0 && sorted_array[j].value > count) {
+    //move elements greater than j to one position to their right (ahead of current position)
+    while (j >= 0 && sorted_array[j].value < count) {
         sorted_array[j+1].doc_id = sorted_array[j].doc_id;
         sorted_array[j+1].value = sorted_array[j].value;
         j--;
     }
+    //insert element into right slot (after j has decremented)
+    sorted_array[j+1].doc_id = key;
+    sorted_array[j+1].value = count;
 
     *array_with_index -> index = i + 1;
 }
@@ -642,6 +661,10 @@ static void test_sort() {
     counters_set(test, 3, 5);
     counters_set(test, 2, 2);
     counters_set(test, 1, 1);
+    counters_set(test, 7, 1);
+    counters_set(test, 5, 1);
+    counters_set(test, 10, 10);
+    counters_set(test, 11, 27);
     fprintf(stdout, "TEST COUNTER: \n");
     counters_print(test, stdout); 
     fprintf(stdout, "\n");
