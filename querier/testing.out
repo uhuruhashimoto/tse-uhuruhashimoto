@@ -1,0 +1,33 @@
+./testing.sh
+Error: wrong number of arguments.
+Usage: ./querier pageDirectory indexFilename
+Error: wrong number of arguments.
+Usage: ./querier pageDirectory indexFilename
+Error: please provide a crawler-produced directory.
+Error: please provide a readable file
+Testing with letters depth 0...
+this
+Query: this 
+Doc:   1  Score   1  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+--------------------------------------
+tse
+Query: tse 
+Doc:   1  Score   1  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+--------------------------------------
+for or home
+Query: for or home 
+Doc:   1  Score   3  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+--------------------------------------
+Testing with letters depth 1...
+for
+Query: for 
+Doc:   1  Score   1  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+Doc:   2  Score   1  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+--------------------------------------
+Testing with letters depth 2...
+for or home
+Query: for or home 
+Doc:   1  Score   3  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/index.html
+Doc:   2  Score   2  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/A.html
+Doc:   3  Score   2  Url: http://cs50tse.cs.dartmouth.edu/tse/letters/B.html
+--------------------------------------
