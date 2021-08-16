@@ -58,9 +58,12 @@ search_query() (single query searcher)
 - print_query(result)
 
 
-RANK QUERY LOGIC
+SORTING LOGIC
 
-This will use the outlined system, with a two-counter structure to hold both the result (malloc'ed and added to), and the comparison counter (part of index; not modified during copy process).
+To sort, we pass an iterator a struct containing two things: (1) an array of countersdata objects, each containing doc_id and count info, and (2) an int pointer to keep track of the index (delineation between the sorted and unsorted sides of the list). For each counter in our result counter (k, v pair) we compare the score (v) to the score of each array entry below it, and move them over one place if their value is less than the score. When it isn't, we put the score in the newly open slot. This sorts the array in order from highest to lowest. 
+
+
+
 
 
 

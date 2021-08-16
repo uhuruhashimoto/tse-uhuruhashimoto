@@ -467,7 +467,7 @@ void display_result(counters_t *answer, char *dirname) {
     counters_iterate(answer, size, count_iterator);
 
     if (*size == 0) {
-        fprintf(stdout, "No results.\n");
+        fprintf(stdout, "No Documents Match.\n");
         return;
     }
 
